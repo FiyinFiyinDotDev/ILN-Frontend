@@ -28,24 +28,24 @@ transactions against the wrong network/contract pairing.
 
 The table below defines the formal configuration diff specification between Testnet and Mainnet. This specification is programmatically enforced by `scripts/check-env-example.mjs` and the CI `config-drift` job to prevent testnet-convenience values from accidentally shipping to production:
 
-| Category | Variable | Testnet value (default) | Mainnet requirement / constraint | Validation Rule |
-| :--- | :--- | :--- | :--- | :--- |
-| **Must Differ** | `NEXT_PUBLIC_STELLAR_NETWORK` | `testnet` | `public` | Strict check: Must equal `public` (**not** `mainnet` or `testnet`). |
-| **Must Differ** | `NEXT_PUBLIC_NETWORK_NAME` | `TESTNET` | `PUBLIC` or `MAINNET` | Must equal `PUBLIC` or `MAINNET`. |
-| **Must Differ** | `NEXT_PUBLIC_NETWORK_PASSPHRASE` | `Test SDF Network ; September 2015` | `Public Global Stellar Network ; September 2015` | Must match official SDF Public passphrase exactly. |
-| **Must Differ** | `NEXT_PUBLIC_RPC_URL` | `https://soroban-testnet.stellar.org` | Mainnet Soroban RPC endpoint | Must use HTTPS and cannot contain `testnet`, `futurenet`, or `localhost`. |
-| **Must Differ** | `NEXT_PUBLIC_CONTRACT_ID` | Testnet contract ID (`CD3T...`) | Mainnet factoring contract ID | Must be a valid 56-char Stellar contract ID (`C...`) and differ from testnet. |
-| **Must Differ** | `NEXT_PUBLIC_GOVERNANCE_CONTRACT_ID` | Testnet governance contract ID | Mainnet governance contract ID | Must not equal testnet contract ID. |
-| **Must Differ** | `NEXT_PUBLIC_NFT_CONTRACT_ID` | Testnet NFT contract ID | Mainnet NFT contract ID | Must not equal testnet contract ID. |
-| **Must Differ** | `NEXT_PUBLIC_TESTNET_USDC_TOKEN_ID` | Testnet USDC (`CCW6...`) | Mainnet USDC token contract ID | Must differ from testnet USDC contract ID. |
-| **Must Differ** | `NEXT_PUBLIC_TESTNET_EURC_TOKEN_ID` | Testnet EURC (`GDHU...`) | Mainnet EURC token contract ID | Must differ from testnet EURC contract ID. |
-| **Must Differ** | `NEXT_PUBLIC_CONTRACT_VERSION` | `testnet:CD3TE3IA` | `public:<HASH>` or `mainnet:<HASH>` | Cannot start with `testnet:`. |
-| **Must Differ** | `NEXT_PUBLIC_INDEXER_API_URL` | `https://api.iln.example.com` | Production indexer API endpoint | Production API endpoint URL. |
-| **Must Differ** | `NEXT_PUBLIC_INDEXER_WS_URL` | `ws://localhost:8080/ws` | Production WebSocket endpoint | Must use `wss://` (or production domain), not localhost. |
-| **Must Differ** | `NEXT_PUBLIC_APP_VERSION` | `dev` | Semantic release tag (e.g. `1.0.0`) | Cannot be `dev`. |
-| **Must Match** | `NEXT_PUBLIC_TESTNET_XLM_TOKEN_ID` | `native-xlm` | `native-xlm` | Invariant: native XLM asset identifier is network-agnostic. |
-| **Must Match** | `NEXT_PUBLIC_NFT_METADATA_METHOD` | `token_uri` | `token_uri` | Invariant: Soroban NFT smart contract interface method name. |
-| **Forbidden** | `NEXT_PUBLIC_API_MOCKING` | `disabled` | `disabled` or unset | Mock Service Worker (MSW) must **never** be enabled (`enabled`/`true`) in production. |
+| Category        | Variable                             | Testnet value (default)               | Mainnet requirement / constraint                 | Validation Rule                                                                       |
+| :-------------- | :----------------------------------- | :------------------------------------ | :----------------------------------------------- | :------------------------------------------------------------------------------------ |
+| **Must Differ** | `NEXT_PUBLIC_STELLAR_NETWORK`        | `testnet`                             | `public`                                         | Strict check: Must equal `public` (**not** `mainnet` or `testnet`).                   |
+| **Must Differ** | `NEXT_PUBLIC_NETWORK_NAME`           | `TESTNET`                             | `PUBLIC` or `MAINNET`                            | Must equal `PUBLIC` or `MAINNET`.                                                     |
+| **Must Differ** | `NEXT_PUBLIC_NETWORK_PASSPHRASE`     | `Test SDF Network ; September 2015`   | `Public Global Stellar Network ; September 2015` | Must match official SDF Public passphrase exactly.                                    |
+| **Must Differ** | `NEXT_PUBLIC_RPC_URL`                | `https://soroban-testnet.stellar.org` | Mainnet Soroban RPC endpoint                     | Must use HTTPS and cannot contain `testnet`, `futurenet`, or `localhost`.             |
+| **Must Differ** | `NEXT_PUBLIC_CONTRACT_ID`            | Testnet contract ID (`CD3T...`)       | Mainnet factoring contract ID                    | Must be a valid 56-char Stellar contract ID (`C...`) and differ from testnet.         |
+| **Must Differ** | `NEXT_PUBLIC_GOVERNANCE_CONTRACT_ID` | Testnet governance contract ID        | Mainnet governance contract ID                   | Must not equal testnet contract ID.                                                   |
+| **Must Differ** | `NEXT_PUBLIC_NFT_CONTRACT_ID`        | Testnet NFT contract ID               | Mainnet NFT contract ID                          | Must not equal testnet contract ID.                                                   |
+| **Must Differ** | `NEXT_PUBLIC_TESTNET_USDC_TOKEN_ID`  | Testnet USDC (`CCW6...`)              | Mainnet USDC token contract ID                   | Must differ from testnet USDC contract ID.                                            |
+| **Must Differ** | `NEXT_PUBLIC_TESTNET_EURC_TOKEN_ID`  | Testnet EURC (`GDHU...`)              | Mainnet EURC token contract ID                   | Must differ from testnet EURC contract ID.                                            |
+| **Must Differ** | `NEXT_PUBLIC_CONTRACT_VERSION`       | `testnet:CD3TE3IA`                    | `public:<HASH>` or `mainnet:<HASH>`              | Cannot start with `testnet:`.                                                         |
+| **Must Differ** | `NEXT_PUBLIC_INDEXER_API_URL`        | `https://api.iln.example.com`         | Production indexer API endpoint                  | Production API endpoint URL.                                                          |
+| **Must Differ** | `NEXT_PUBLIC_INDEXER_WS_URL`         | `ws://localhost:8080/ws`              | Production WebSocket endpoint                    | Must use `wss://` (or production domain), not localhost.                              |
+| **Must Differ** | `NEXT_PUBLIC_APP_VERSION`            | `dev`                                 | Semantic release tag (e.g. `1.0.0`)              | Cannot be `dev`.                                                                      |
+| **Must Match**  | `NEXT_PUBLIC_TESTNET_XLM_TOKEN_ID`   | `native-xlm`                          | `native-xlm`                                     | Invariant: native XLM asset identifier is network-agnostic.                           |
+| **Must Match**  | `NEXT_PUBLIC_NFT_METADATA_METHOD`    | `token_uri`                           | `token_uri`                                      | Invariant: Soroban NFT smart contract interface method name.                          |
+| **Forbidden**   | `NEXT_PUBLIC_API_MOCKING`            | `disabled`                            | `disabled` or unset                              | Mock Service Worker (MSW) must **never** be enabled (`enabled`/`true`) in production. |
 
 > **Naming note:** the codebase and CI use `public` (not `mainnet`) as the value of `NEXT_PUBLIC_STELLAR_NETWORK`
 > for the Stellar public network, matching the `testnet`/`public` convention documented in
@@ -59,6 +59,7 @@ To prevent configuration drift and accidental leaks of testnet settings, the pro
 
 1. **Production Configuration Baseline**: `.env.production.example` defines the canonical production template and baseline snapshot against which `.env.local.example` is verified.
 2. **Local Drift Verification**:
+
    ```bash
    # Run baseline drift check comparing testnet example against production example snapshot
    pnpm run env:drift-check
@@ -69,6 +70,7 @@ To prevent configuration drift and accidental leaks of testnet settings, the pro
    # Check against live Vercel production environment (requires VERCEL_TOKEN and VERCEL_PROJECT_ID)
    VERCEL_TOKEN=... VERCEL_PROJECT_ID=... node scripts/check-env-example.mjs --drift-check --vercel
    ```
+
 3. **CI Pipeline Enforcement**: The `config-drift` job in `.github/workflows/ci.yml` runs on every PR and push to `main`/`develop`, failing if any required differences are missing, invariants are broken, or forbidden testnet flags are detected.
 4. **Cutover Update Procedure**: When contract IDs or RPC URLs are deployed to mainnet, update `.env.production.example` in the release PR and verify with `pnpm run env:drift-check`.
 
@@ -112,6 +114,7 @@ To avoid deploying changes straight to 100% of production traffic, ILN Frontend 
 ```
 
 ### 4.1 Staging Environment Configuration
+
 - **Branch**: `develop`
 - **Target URL**: `https://staging.iln.finance` (or Vercel preview URL)
 - **Configuration**: Points to real mainnet Soroban RPC endpoint and smart contract IDs in read-only mode, with `NEXT_PUBLIC_API_MOCKING=disabled`.
@@ -121,13 +124,13 @@ To avoid deploying changes straight to 100% of production traffic, ILN Frontend 
 
 Before any release candidate is promoted from Staging to Production, all five promotion criteria must be met:
 
-| Gate | Requirement | Verification Method |
-| :--- | :--- | :--- |
-| **1. CI Status Checks** | All required CI checks passing on release commit | `CI / lint`, `CI / tests`, `CI / build`, `CI / config-drift`, `contract-tests`, `lighthouse`, `accessibility` all green |
-| **2. Configuration Drift** | Zero drift violations between testnet and mainnet specs | `pnpm run env:drift-check` exits code 0 |
-| **3. Staging Smoke Test** | 100% pass on read-only mainnet smoke suite | `e2e/mainnet-smoke.spec.ts` passes against staging preview URL |
-| **4. Sentry Health Bake** | No new unhandled exceptions or error bursts during staging bake window | Sentry dashboard check (minimum 30 min bake period on staging) |
-| **5. Manual QA Sign-Off** | Manual smoke test checklist completed by authorized reviewer | [Section 6.2 Manual Checklist](#62-manual-verification-checklist) signed off in release issue/PR |
+| Gate                       | Requirement                                                            | Verification Method                                                                                                     |
+| :------------------------- | :--------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------- |
+| **1. CI Status Checks**    | All required CI checks passing on release commit                       | `CI / lint`, `CI / tests`, `CI / build`, `CI / config-drift`, `contract-tests`, `lighthouse`, `accessibility` all green |
+| **2. Configuration Drift** | Zero drift violations between testnet and mainnet specs                | `pnpm run env:drift-check` exits code 0                                                                                 |
+| **3. Staging Smoke Test**  | 100% pass on read-only mainnet smoke suite                             | `e2e/mainnet-smoke.spec.ts` passes against staging preview URL                                                          |
+| **4. Sentry Health Bake**  | No new unhandled exceptions or error bursts during staging bake window | Sentry dashboard check (minimum 30 min bake period on staging)                                                          |
+| **5. Manual QA Sign-Off**  | Manual smoke test checklist completed by authorized reviewer           | [Section 6.2 Manual Checklist](#62-manual-verification-checklist) signed off in release issue/PR                        |
 
 ### 4.3 Executing Production Promotion
 
@@ -168,11 +171,13 @@ dry run in [Section 4](#4-staged-canary-rollout-procedure-issue-688).
 An automated, strictly read-only smoke test suite is available in `e2e/mainnet-smoke.spec.ts` to verify production deployments without executing state-mutating transactions or risking real funds.
 
 #### Running via GitHub Actions (Recommended for Deploys)
+
 1. Go to **Actions** → **Mainnet Post-Deploy Smoke Test** (`.github/workflows/mainnet-post-deploy-smoke.yml`).
 2. Click **Run workflow**, enter the target deployment URL (e.g. `https://app.iln.finance` or preview domain), and optionally verify the published mainnet contract ID.
 3. Confirm all smoke checks pass (green status).
 
 #### Running Locally
+
 ```bash
 # Smoke test a specific deployment URL in read-only mode
 PLAYWRIGHT_BASE_URL=https://app.iln.finance pnpm run test:mainnet-smoke
@@ -213,6 +218,7 @@ For steady-state operation, all code releases follow the staged deployment workf
 ### Current DNS Configuration
 
 #### Production Domain
+
 - **Domain**: `app.iln.finance` (or the configured production domain)
 - **DNS Provider**: [To be documented - verify with infrastructure team]
 - **Current Status**: Audit required
@@ -222,6 +228,7 @@ For steady-state operation, all code releases follow the staged deployment workf
 DNSSEC adds cryptographic signatures to DNS records, preventing DNS cache poisoning and hijacking attacks.
 
 #### Current Status
+
 - **DNSSEC Enabled**: [To be verified - check with DNS provider]
 - **Implementation Status**: Audit required
 
@@ -254,6 +261,7 @@ dig +dnssec app.iln.finance
 CAA records restrict which Certificate Authorities (CAs) are authorized to issue SSL/TLS certificates for the domain, preventing unauthorized certificate issuance.
 
 #### Current Status
+
 - **CAA Records Configured**: [To be verified]
 - **Authorized CAs**: [To be documented]
 
@@ -281,6 +289,7 @@ app.iln.finance.  IN  CAA  0 iodef "mailto:security@example.com"
 ```
 
 **Explanation**:
+
 - `issue "letsencrypt.org"` - Only Let's Encrypt can issue certificates for this domain
 - `issuewild "letsencrypt.org"` - Only Let's Encrypt can issue wildcard certificates
 - `iodef` - Email address to receive reports if an unauthorized CA attempts to issue a certificate
@@ -295,17 +304,20 @@ app.iln.finance.  IN  CAA  0 iodef "mailto:security@example.com"
 ### Additional DNS Security Best Practices
 
 #### DNS Provider Access Control
+
 - [ ] Audit who has access to modify DNS records
 - [ ] Enable 2FA for all DNS provider accounts
 - [ ] Use IP whitelisting for DNS management API access (if supported)
 - [ ] Enable audit logging for DNS changes
 
 #### DNS Record Monitoring
+
 - [ ] Set up monitoring for unexpected DNS record changes
 - [ ] Monitor TTL values to ensure they're appropriate (not excessively long)
 - [ ] Monitor for new subdomain creation (potential subdomain takeover risk)
 
 #### DNS Redundancy
+
 - [ ] Ensure DNS is hosted on multiple providers (if possible)
 - [ ] Verify DNS failover is configured and tested
 - [ ] Monitor DNS resolution latency and uptime
@@ -337,16 +349,19 @@ After launch, monitor the following:
 If DNS hijacking is suspected:
 
 1. **Immediate containment**
+
    - Revoke DNS provider access for compromised accounts
    - Rotate DNS provider API keys
    - Restore DNS records from last known good configuration
 
 2. **Verification**
+
    - Verify DNSSEC signatures are still valid
    - Verify CAA records haven't been modified
    - Check for unauthorized subdomains
 
 3. **Communication**
+
    - Follow the incident response procedure in [docs/incident-response.md](incident-response.md)
    - Notify users if DNS hijacking could have affected certificate issuance
 
@@ -366,3 +381,5 @@ Please verify and complete the following:
 - [ ] Set up DNS change monitoring
 - [ ] Document the actual DNS provider and configuration in this section
 - [ ] Test DNS resolution from multiple geographic locations before launch
+
+Joint rehearsal findings pending.
