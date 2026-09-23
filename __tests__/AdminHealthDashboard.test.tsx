@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AdminHealthDashboard from '@/app/admin/page';
 
@@ -136,7 +136,6 @@ describe('AdminHealthDashboard', () => {
     setProtocolPaused.mockResolvedValue({ txHash: 'abc', paused: true });
     executeReadyProposals.mockReset();
     executeReadyProposals.mockResolvedValue(['tx']);
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
   it('renders a 403 state for non-admin wallets', () => {
@@ -191,21 +190,31 @@ describe('AdminHealthDashboard', () => {
     expect(screen.getByText('Parameter Updated: Protocol fee rate')).toBeInTheDocument();
   });
 
-  it('requires confirmation before pausing the protocol', async () => {
+  it('requires confirmation through the accessible dialog before pausing the protocol', async () => {
     const user = userEvent.setup();
     render(<AdminHealthDashboard />);
     await user.click(await screen.findByRole('button', { name: 'Pause' }));
+
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveAttribute('aria-modal', 'true');
+
+    await user.click(within(dialog).getByRole('button', { name: 'Pause protocol' }));
     await waitFor(() => {
-      expect(window.confirm).toHaveBeenCalled();
       expect(setProtocolPaused).toHaveBeenCalledWith(true, adminAddress, walletState.signTx);
     });
   });
 
-  it('does not call admin actions when confirmation is rejected', async () => {
-    vi.mocked(window.confirm).mockReturnValue(false);
+  it('does not call admin actions when the confirmation dialog is cancelled', async () => {
     const user = userEvent.setup();
     render(<AdminHealthDashboard />);
     await user.click(await screen.findByRole('button', { name: 'Pause' }));
+
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
     expect(setProtocolPaused).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
   });
 });

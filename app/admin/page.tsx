@@ -7,6 +7,7 @@ import { useWallet } from '@/context/WalletContext';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { useApprovedTokens } from '@/hooks/useApprovedTokens';
 import FunnelAnalyticsPanel from '@/components/admin/FunnelAnalyticsPanel';
+import AdminConfirmDialog from '@/components/admin/AdminConfirmDialog';
 import {
   executeReadyProposals,
   fetchAdminActionHistory,
@@ -80,6 +81,12 @@ export default function AdminHealthDashboard() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [lastRefreshAt, setLastRefreshAt] = useState<number | null>(null);
+  const [pendingConfirmation, setPendingConfirmation] = useState<
+    | { type: 'pause' }
+    | { type: 'execute' }
+    | { type: 'remove-token'; tokenId: string; symbol: string }
+    | null
+  >(null);
 
   // Token management state
   const {
@@ -144,15 +151,14 @@ export default function AdminHealthDashboard() {
       : `Next upgrade window: ${formatDateTime(health.upgradeWindowStartsAt)}`;
   }, [health]);
 
-  const handlePauseToggle = async () => {
+  const requestPauseToggle = () => {
+    if (!health) return;
+    setPendingConfirmation({ type: 'pause' });
+  };
+
+  const performPauseToggle = async () => {
     if (!address || !health) return;
     const nextPaused = !health.paused;
-    const confirmed = window.confirm(
-      `Confirm ${
-        nextPaused ? 'pausing' : 'unpausing'
-      } the protocol. This sensitive admin action will call the contract.`
-    );
-    if (!confirmed) return;
 
     setActionBusy('pause');
     setActionMessage(null);
@@ -169,14 +175,13 @@ export default function AdminHealthDashboard() {
     }
   };
 
-  const handleExecuteReady = async () => {
+  const requestExecuteReady = () => {
+    if (!health || health.readyProposals.length === 0) return;
+    setPendingConfirmation({ type: 'execute' });
+  };
+
+  const performExecuteReady = async () => {
     if (!address || !health || health.readyProposals.length === 0) return;
-    const confirmed = window.confirm(
-      `Confirm executing ${health.readyProposals.length} ready governance proposal${
-        health.readyProposals.length === 1 ? '' : 's'
-      }.`
-    );
-    if (!confirmed) return;
 
     setActionBusy('execute');
     setActionMessage(null);
@@ -216,15 +221,12 @@ export default function AdminHealthDashboard() {
     }
   };
 
-  const handleRemoveToken = async (tokenId: string, symbol: string) => {
+  const requestRemoveToken = (tokenId: string, symbol: string) => {
+    setPendingConfirmation({ type: 'remove-token', tokenId, symbol });
+  };
+
+  const performRemoveToken = async (tokenId: string, symbol: string) => {
     if (!address) return;
-    const confirmed = window.confirm(
-      `Confirm removing token ${symbol} (${tokenId.slice(
-        0,
-        8
-      )}…) from the approved list. This will prevent new invoices from using this token.`
-    );
-    if (!confirmed) return;
 
     setTokenActionBusy(`remove-${tokenId}`);
     setTokenActionMessage(null);
@@ -236,6 +238,23 @@ export default function AdminHealthDashboard() {
     } finally {
       setTokenActionBusy(null);
     }
+  };
+
+  const confirmPendingAction = async () => {
+    if (!pendingConfirmation) return;
+    const confirmation = pendingConfirmation;
+    setPendingConfirmation(null);
+    if (confirmation.type === 'pause') {
+      await performPauseToggle();
+    } else if (confirmation.type === 'execute') {
+      await performExecuteReady();
+    } else {
+      await performRemoveToken(confirmation.tokenId, confirmation.symbol);
+    }
+  };
+
+  const cancelPendingAction = () => {
+    setPendingConfirmation(null);
   };
 
   if (!isAdmin) {
@@ -353,7 +372,7 @@ export default function AdminHealthDashboard() {
                   <div className="flex flex-col gap-3 sm:flex-row">
                     <button
                       type="button"
-                      onClick={handlePauseToggle}
+                      onClick={requestPauseToggle}
                       disabled={actionBusy !== null}
                       className="min-h-11 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-primary/90 disabled:opacity-60"
                     >
@@ -371,7 +390,7 @@ export default function AdminHealthDashboard() {
                     </Link>
                     <button
                       type="button"
-                      onClick={handleExecuteReady}
+                      onClick={requestExecuteReady}
                       disabled={actionBusy !== null || readyProposalCount === 0}
                       className="min-h-11 rounded-xl border border-primary/40 px-4 py-2 text-sm font-bold text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
                     >
@@ -380,7 +399,9 @@ export default function AdminHealthDashboard() {
                   </div>
                 </div>
                 {actionMessage ? (
-                  <p className="mt-4 text-sm font-medium text-on-surface">{actionMessage}</p>
+                  <p role="status" className="mt-4 text-sm font-medium text-on-surface">
+                    {actionMessage}
+                  </p>
                 ) : null}
               </section>
             </>
@@ -477,7 +498,7 @@ export default function AdminHealthDashboard() {
                       {token.isAllowed ? (
                         <button
                           type="button"
-                          onClick={() => handleRemoveToken(token.contractId, token.symbol)}
+                          onClick={() => requestRemoveToken(token.contractId, token.symbol)}
                           disabled={tokenActionBusy !== null}
                           className="rounded-xl border border-error/30 px-3 py-1.5 text-xs font-bold text-error transition-colors hover:bg-error/10 disabled:opacity-50"
                           aria-label={`Remove ${token.symbol}`}
@@ -499,7 +520,9 @@ export default function AdminHealthDashboard() {
             </div>
 
             {tokenActionMessage ? (
-              <p className="mt-4 text-sm font-medium text-on-surface">{tokenActionMessage}</p>
+              <p role="status" className="mt-4 text-sm font-medium text-on-surface">
+                {tokenActionMessage}
+              </p>
             ) : null}
           </section>
 
@@ -527,7 +550,7 @@ export default function AdminHealthDashboard() {
 
               <div
                 className="flex flex-wrap gap-2"
-                role="tablist"
+                role="group"
                 aria-label="Admin action filters"
               >
                 {[
@@ -656,7 +679,10 @@ export default function AdminHealthDashboard() {
               })}
 
               {filteredAdminActions.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-outline-variant/30 p-6 text-center text-sm text-on-surface-variant">
+                <div
+                  role="status"
+                  className="rounded-xl border border-dashed border-outline-variant/30 p-6 text-center text-sm text-on-surface-variant"
+                >
                   No admin actions found for the selected filter.
                 </div>
               ) : null}
@@ -667,6 +693,45 @@ export default function AdminHealthDashboard() {
           <FunnelAnalyticsPanel />
         </div>
       </section>
+
+      {pendingConfirmation ? (
+        <AdminConfirmDialog
+          title={
+            pendingConfirmation.type === 'pause'
+              ? health?.paused
+                ? 'Unpause the protocol'
+                : 'Pause the protocol'
+              : pendingConfirmation.type === 'execute'
+                ? 'Execute ready proposals'
+                : 'Remove approved token'
+          }
+          description={
+            pendingConfirmation.type === 'pause'
+              ? 'This sensitive admin action will call the contract. Funding and settlement behaviour changes immediately for all users.'
+              : pendingConfirmation.type === 'execute'
+                ? `Confirm executing ${
+                    health?.readyProposals.length ?? 0
+                  } ready governance proposal${
+                    (health?.readyProposals.length ?? 0) === 1 ? '' : 's'
+                  }. This sensitive admin action will call the contract.`
+                : `Confirm removing token ${pendingConfirmation.symbol} (${pendingConfirmation.tokenId.slice(
+                    0,
+                    8
+                  )}…) from the approved list. This will prevent new invoices from using this token.`
+          }
+          confirmLabel={
+            pendingConfirmation.type === 'pause'
+              ? health?.paused
+                ? 'Unpause protocol'
+                : 'Pause protocol'
+              : pendingConfirmation.type === 'execute'
+                ? 'Execute proposals'
+                : 'Remove token'
+          }
+          onConfirm={() => void confirmPendingAction()}
+          onCancel={cancelPendingAction}
+        />
+      ) : null}
     </main>
   );
 }

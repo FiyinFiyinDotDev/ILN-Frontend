@@ -28,6 +28,8 @@ This directory contains the main contributor and operations documentation for th
 - **[i18n.md](i18n.md)** - Internationalization setup and translation workflow details.
 - **[repo-size-audit.md](repo-size-audit.md)** - Repository size analysis and optimization recommendations.
 - **[supabase-setup.md](supabase-setup.md)** - Supabase configuration and local setup notes.
+- **[backend-checklist-cross-link-coordination.md](backend-checklist-cross-link-coordination.md)** - Coordination record for cross-linking the smart-contract repo's mainnet launch checklist to the frontend readiness checklist.
+- **[mainnet-frontend-readiness-checklist.md](mainnet-frontend-readiness-checklist.md)** - Consolidated frontend mainnet readiness checklist tying every category's closing artifact together for the go/no-go decision.
 
 ## Hooks and Examples
 

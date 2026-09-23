@@ -67,7 +67,7 @@ export default function FunnelAnalyticsPanel() {
         </div>
 
         {/* Filter controls */}
-        <div className="flex flex-wrap gap-2" role="tablist" aria-label="Funnel flow filters">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Funnel flow filters">
           {[
             { value: 'all', label: 'All Flows' },
             { value: 'invoice_submission', label: 'Invoice Submissions' },
@@ -109,9 +109,9 @@ export default function FunnelAnalyticsPanel() {
                     <span className="rounded-full bg-error px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-widest text-white">
                       {signingHealth.activeAlert.severity} ACTIVE
                     </span>
-                    <h3 className="text-sm font-bold text-error">
+                    <span className="text-sm font-bold text-error">
                       Transaction-Signing Failure Rate Spike Detected
-                    </h3>
+                    </span>
                   </div>
                   <p className="text-xs">{signingHealth.activeAlert.description}</p>
                   <p className="text-[11px] text-on-surface-variant">
