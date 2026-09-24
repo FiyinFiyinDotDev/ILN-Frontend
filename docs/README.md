@@ -34,6 +34,7 @@ This directory contains the main contributor and operations documentation for th
 - **[backend-checklist-cross-link-coordination.md](backend-checklist-cross-link-coordination.md)** - Coordination record for cross-linking the smart-contract repo's mainnet launch checklist to the frontend readiness checklist.
 - **[mainnet-frontend-readiness-checklist.md](mainnet-frontend-readiness-checklist.md)** - Consolidated frontend mainnet readiness checklist tying every category's closing artifact together for the go/no-go decision.
 - **[status-page-incident-tooling-readiness-report.md](status-page-incident-tooling-readiness-report.md)** - Readiness of the status page and incident tooling: what is automated, what is still manual, and open gaps.
+- **[batch-closing-summary-scf-deliverable.md](batch-closing-summary-scf-deliverable.md)** - Category-by-category point tally and completion status for the current frontend hardening batch, as the SCF-facing deliverable record.
 - **[contract-integration-status.md](contract-integration-status.md)** - Which frontend features are backed by live on-chain contracts versus stubbed, derived, or deferred.
 - **[cross-repo-contract-sync-readiness.md](cross-repo-contract-sync-readiness.md)** - Readiness report for the joint frontend/backend contract-sync rehearsal.
 - **[graphql-query-guidelines.md](graphql-query-guidelines.md)** - Guidelines for implementing GraphQL queries if/when the indexer's GraphQL endpoint is adopted.
