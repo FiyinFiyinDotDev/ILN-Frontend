@@ -134,6 +134,7 @@ export default function FundingChart() {
       setLoading(true);
       try {
         const baseUrl = process.env.NEXT_PUBLIC_INDEXER_API_URL ?? 'https://api.iln.example.com';
+        // eslint-disable-next-line no-restricted-globals, no-restricted-syntax -- Legacy inline exception pending query hook migration
         const res = await fetch(`${baseUrl}/v1/analytics/funding?period=${range.toLowerCase()}`);
         if (!res.ok) throw new Error('Failed to fetch');
         const json = await res.json();

@@ -243,6 +243,34 @@ This command generates:
 - Storybook file: `src/components/<ComponentName>.stories.tsx`
 - Test stub file: `src/components/__tests__/<ComponentName>.test.tsx` (or inside the target subdirectory)
 
+### Data Fetching and React Query Architecture
+
+To ensure consistent caching, loading states, and bundle efficiency across the application:
+
+1. **Centralized Query Hooks**:
+   All contract data and network fetching logic must be encapsulated inside custom React Query hooks under `src/hooks/queries/` (or `src/hooks/`).
+
+   - Direct `fetch()` calls and direct `useQueryClient` / `QueryClient` usage are **disallowed** inside UI component files (`src/components`, `src/screens`, `src/app`).
+   - An ESLint rule in `eslint.config.mjs` flags direct `fetch` and `useQueryClient` imports/usages in component files outside `src/hooks`.
+
+2. **Shared Default Query Configuration**:
+   All query hooks build on `DEFAULT_QUERY_CONFIG` / `createQueryConfig` exported from `src/hooks/queries/defaultConfig`:
+
+   - `staleTime`: Default 30,000ms (30 seconds)
+   - `gcTime`: Default 5 minutes (300,000ms)
+   - `refetchOnWindowFocus`: Default `false`
+   - `retry`: Default `2`
+
+   Documented per-hook overrides (such as custom `staleTime` or `refetchInterval`) are permitted via `createQueryConfig({ ... })` when genuinely justified by data volatility.
+
+3. **Exception Process**:
+   In rare cases where direct `fetch` or `useQueryClient` is genuinely required inside a component (e.g. an isolated user feedback form submission or app-level reconnect banner):
+   - Add an inline ESLint disable comment above the line:
+     ```typescript
+     // eslint-disable-next-line no-restricted-syntax, no-restricted-imports -- Legacy inline exception or client-only action
+     ```
+   - Provide a concise comment documenting why a custom hook in `src/hooks/queries` was not used.
+
 ### Code Style and Formatting
 
 We use **ESLint** and **Prettier** to maintain consistent code quality.

@@ -84,6 +84,7 @@ export default function NotificationBell() {
     let active = true;
 
     const fetchNotifications = async () => {
+      // eslint-disable-next-line no-restricted-globals, no-restricted-syntax -- Legacy inline exception pending query hook migration
       const res = await fetch(`/api/notifications/${address}`);
       if (!active || !res.ok) return;
 
