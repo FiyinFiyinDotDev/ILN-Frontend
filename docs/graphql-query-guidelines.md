@@ -1,6 +1,8 @@
 # GraphQL Query Guidelines
 
-This document provides guidelines for implementing GraphQL queries in the frontend if/when the indexer's GraphQL endpoint is adopted.
+> Roadmap decision (2026-09-24): **deferred until after mainnet; no frontend adoption is approved for the near term.**
+
+This document is retained as a decision record and future re-entry checklist. It does not authorize adding a GraphQL client, endpoint, query, or feature flag to the frontend before the roadmap is revisited.
 
 ## Current Status
 
@@ -12,7 +14,9 @@ As of this writing, the frontend uses REST API endpoints exclusively:
 - `/api/notifications` - User notification data
 - Indexer REST endpoints for invoice events and protocol feed
 
-GraphQL is mentioned in the roadmap as a planned feature for third-party integrations but is not currently used by the frontend.
+GraphQL is not currently used by the frontend. The near-term product flows—invoice submission, invoice funding, governance, payments, notifications, and analytics—are served by REST, Soroban RPC, Horizon, Supabase, and indexer REST/WebSocket endpoints. No current mainnet milestone requires GraphQL's aggregation or schema capabilities. Adding it now would create a second data-access path, duplicate caching/error handling, and increase operational surface without a committed consumer.
+
+The decision is therefore to defer GraphQL until after mainnet. Reconsideration requires a named product use case, an owning team, a versioned indexer schema, staging performance evidence, and a migration/rollback plan. Until those inputs exist, new work should use the existing REST/Soroban-RPC/Supabase patterns.
 
 ## Indexer Query Complexity Limits
 
