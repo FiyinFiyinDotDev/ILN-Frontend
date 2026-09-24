@@ -135,7 +135,7 @@ function encodeReferralCodeBytes(code: string): xdr.ScVal {
   const bytes = new Uint8Array(32);
   const encoded = new TextEncoder().encode(code);
   bytes.set(encoded.slice(0, 32), 0);
-  return xdr.ScVal.scvBytes(bytes);
+  return xdr.ScVal.scvBytes(Buffer.from(bytes));
 }
 
 /**
@@ -945,7 +945,7 @@ export async function disputeInvoice(payer: string, invoice_id: bigint, reason_h
  * Flip this to `true` (and replace the stub below) once the instruction
  * lands on-chain.
  */
-export const UPDATE_LP_WHITELIST_SUPPORTED = false;
+export const UPDATE_LP_WHITELIST_SUPPORTED: boolean = false;
 
 /**
  * Stub for updateLPWhitelist — some deployments may not support this
