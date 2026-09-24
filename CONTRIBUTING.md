@@ -175,6 +175,34 @@ Read [docs/architecture.md](docs/architecture.md) first. Some questions have alr
 
 - **GraphQL**: the frontend reads data over REST, Soroban RPC, Horizon, and the indexer's REST/WebSocket endpoints. The decision to adopt, defer, or drop GraphQL is made in [#929](https://github.com/Invoice-Liquidity-Network/ILN-Frontend/issues/929) and recorded in the status section of [docs/graphql-query-guidelines.md](docs/graphql-query-guidelines.md). Read both before proposing a GraphQL client or layer.
 
+### Data Fetching and React Query Architecture
+
+To ensure consistent caching, loading states, and bundle efficiency across the application:
+
+1. **Centralized Query Hooks**:
+   All contract data and network fetching logic must be encapsulated inside custom React Query hooks under `src/hooks/queries/` (or `src/hooks/`).
+
+   - Direct `fetch()` calls and direct `useQueryClient` / `QueryClient` usage are **disallowed** inside UI component files (`src/components`, `src/screens`, `src/app`).
+   - An ESLint rule in `eslint.config.mjs` flags direct `fetch` and `useQueryClient` imports/usages in component files outside `src/hooks`.
+
+2. **Shared Default Query Configuration**:
+   All query hooks build on `DEFAULT_QUERY_CONFIG` / `createQueryConfig` exported from `src/hooks/queries/defaultConfig`:
+
+   - `staleTime`: Default 30,000ms (30 seconds)
+   - `gcTime`: Default 5 minutes (300,000ms)
+   - `refetchOnWindowFocus`: Default `false`
+   - `retry`: Default `2`
+
+   Documented per-hook overrides (such as custom `staleTime` or `refetchInterval`) are permitted via `createQueryConfig({ ... })` when genuinely justified by data volatility.
+
+3. **Exception Process**:
+   In rare cases where direct `fetch` or `useQueryClient` is genuinely required inside a component (e.g. an isolated user feedback form submission or app-level reconnect banner):
+   - Add an inline ESLint disable comment above the line:
+     ```typescript
+     // eslint-disable-next-line no-restricted-syntax, no-restricted-imports -- Legacy inline exception or client-only action
+     ```
+   - Provide a concise comment documenting why a custom hook in `src/hooks/queries` was not used.
+
 ### Code Style and Formatting
 
 We use **ESLint** and **Prettier** to maintain consistent code quality.

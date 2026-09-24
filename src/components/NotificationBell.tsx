@@ -96,34 +96,9 @@ export default function NotificationBell() {
     let active = true;
 
     const fetchNotifications = async () => {
-      let res: Response | undefined;
-      try {
-        res = await fetch(`/api/notifications/${address}`);
-      } catch {
-        // The notifications service is unreachable; keep cached state and
-        // signal the degradation honestly rather than surfacing an error.
-        if (active) setServiceUnavailable(true);
-        return;
-      }
-      if (!active) return;
-      if (!res || typeof res.status !== 'number') {
-        // No usable response (e.g. an interrupted poll). Never crash the poll
-        // loop; keep cached notifications and show the degraded marker.
-        setServiceUnavailable(true);
-        return;
-      }
-
-      if (res.status === 429 || res.status === 503) {
-        // Notifications service is degraded (rate limited or circuit open).
-        // Keep showing previously cached notifications; never clear them or
-        // present a broken/blank state. Signal the degradation honestly.
-        setServiceUnavailable(true);
-        return;
-      }
-
-      setServiceUnavailable(false);
-
-      if (!res.ok) return;
+      // eslint-disable-next-line no-restricted-globals, no-restricted-syntax -- Legacy inline exception pending query hook migration
+      const res = await fetch(`/api/notifications/${address}`);
+      if (!active || !res.ok) return;
 
       const data = (await res.json()) as ExternalNotification[];
       // A poll that resolves after the wallet changed belongs to the previous

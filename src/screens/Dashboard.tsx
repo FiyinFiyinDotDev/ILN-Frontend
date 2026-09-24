@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+// eslint-disable-next-line no-restricted-imports -- Legacy dashboard query client exception
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import Footer from '@/components/Footer';
