@@ -95,3 +95,76 @@ With `seedN = 10_000` on `/dashboard` table mode:
   sharply; long tasks > 200 ms common.
 - **After:** 50 `<tr>` mounted initially; "Load more" reveals 50 at a time;
   TTI and scrolling remain flat across `N`.
+
+## Multi-incident load simulation (status surfaces)
+
+**Issue:** [Invoice-Liquidity-Network/ILN-Frontend#939](https://github.com/Invoice-Liquidity-Network/ILN-Frontend/issues/939)
+
+The status page itself is hosted on Instatus (see
+[status-page-runbook.md](./status-page-runbook.md)) and is not part of this
+repository, so it cannot be load-tested here. What this repository does own is
+the in-app side of the incident path: the surfaces that tell a user a
+status-page component is degraded while they are using the app. This section
+records how those surfaces behave when several components fail at once, not
+just one incident at a time.
+
+### Scenario
+
+`__tests__/status-multi-incident-load.test.tsx` renders the incident surfaces
+together and fails every dependency simultaneously for a simulated ten minutes
+(fake timers):
+
+| Status-page component | Simulated failure                                               | In-app surface                                  |
+| --------------------- | --------------------------------------------------------------- | ----------------------------------------------- |
+| API / Indexer         | Indexer WebSocket and Horizon event stream both refuse          | `ContractEventSync` alert (`useContractEvents`) |
+| Smart Contracts       | Contract reports `paused` (`get_protocol_status()`)             | `MaintenanceModeBanner`                         |
+| Notifications service | `GET /api/notifications/[address]` returns `503` (circuit open) | `NotificationBell` degraded marker              |
+
+It uses the real `connectIndexerWebSocket` / `connectHorizonTransactionStream`
+clients against failing `WebSocket` / `EventSource` stubs, so the stream
+clients' own reconnect loops take part in the simulation.
+
+Assertions:
+
+- Each degraded component renders exactly one indicator (one maintenance
+  banner, one contract-event alert, one degraded marker).
+- Contract-event reconnects are bounded: one WebSocket attempt, then one
+  Horizon stream per hook-level attempt (initial + 3 retries = 4) before the
+  alert asks the user to refresh.
+- The notifications service is polled once per 60 s interval and never retried
+  on `503`.
+- Nothing keeps connecting or polling after the surfaces unmount.
+
+### Findings and fixes
+
+1. **Reconnect storm in the Horizon fallback (fixed).** When a Horizon stream
+   reported `disconnected`, `useContractEvents` scheduled a new stream but left
+   the failed one open. Its own reconnect loop (up to 8 attempts) kept running
+   and every further `disconnected` it reported scheduled another stream. The
+   retried streams were also never stored, so unmounting could not close them.
+   Tracing the code, one tab could open up to 820 Horizon streams (about 7,400
+   `EventSource` connections) during a combined indexer and Horizon outage.
+   The hook now closes a failed stream before retrying, ignores anything it
+   reports afterwards, and keeps the retried stream in `horizonHandleRef` so
+   cleanup closes it.
+2. **Duplicate Horizon fallback (fixed).** A WebSocket that drops without an
+   error reports `disconnected`, then `error` from its pending reconnect. Both
+   triggered the fallback, opening two Horizon streams and leaking the first.
+   The fallback now runs once per WebSocket connection.
+3. **Extra notification requests (fixed).** `NotificationBell` restarted its
+   poll, sending an immediate extra request, whenever read state changed (on
+   mount and on every "mark as read"). It now reads the latest callbacks
+   through refs and polls only on its fixed interval.
+
+### Residual and accepted risk
+
+- The Instatus-hosted page, its subscriber notifications, and the automation
+  planned in #934 to #938 are not in this repository or not built yet, so none
+  of them are covered here. See the
+  [status page and incident tooling readiness report](./status-page-incident-tooling-readiness-report.md).
+- `getProtocolStatus()` falls back to `{ paused: false }` when the Stellar RPC
+  is unreachable, so an RPC outage shows no maintenance banner. This is
+  deliberate (the banner never blocks rendering); the component-level check in
+  #934 / #871 is where RPC reachability belongs.
+- The simulation runs in jsdom with fake timers. It checks request and
+  connection counts, not real network throughput.

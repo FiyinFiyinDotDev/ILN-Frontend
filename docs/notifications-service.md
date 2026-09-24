@@ -15,6 +15,15 @@ modes so the UI shows the _right_ user-facing guidance instead of a generic
 error or a silent blank state. See `src/lib/notifications.ts` for the shared
 definitions.
 
+## Delivery mechanism
+
+The read path is **polled, not pushed**. `NotificationBell` requests
+`GET /api/notifications/[address]` on mount and every 60 seconds; no WebSocket
+or SSE channel carries notifications. The `/notifications` page renders the same
+client-side store. See
+[route-map.md](./route-map.md#notifications-route-data-source) for the route's
+full data flow, including how read/unread state is persisted.
+
 ## Failure modes
 
 | Kind           | HTTP signal             | Meaning                                                              | Frontend behavior                                                                 |

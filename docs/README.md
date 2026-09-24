@@ -30,6 +30,7 @@ This directory contains the main contributor and operations documentation for th
 - **[supabase-setup.md](supabase-setup.md)** - Supabase configuration and local setup notes.
 - **[backend-checklist-cross-link-coordination.md](backend-checklist-cross-link-coordination.md)** - Coordination record for cross-linking the smart-contract repo's mainnet launch checklist to the frontend readiness checklist.
 - **[mainnet-frontend-readiness-checklist.md](mainnet-frontend-readiness-checklist.md)** - Consolidated frontend mainnet readiness checklist tying every category's closing artifact together for the go/no-go decision.
+- **[status-page-incident-tooling-readiness-report.md](status-page-incident-tooling-readiness-report.md)** - Readiness of the status page and incident tooling: what is automated, what is still manual, and open gaps.
 
 ## Hooks and Examples
 

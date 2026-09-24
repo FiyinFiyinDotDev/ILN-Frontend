@@ -56,6 +56,17 @@ export default function NotificationBell() {
   const [announcement, setAnnouncement] = useState('');
   const [serviceUnavailable, setServiceUnavailable] = useState(false);
 
+  // The poll reads the latest read-state callbacks through refs. Depending on
+  // them directly restarted polling, firing an extra request at the
+  // notifications service, every time a notification was marked read, and let
+  // an in-flight poll apply a stale `isRead` that flipped it back to unread.
+  const isReadRef = useRef(isRead);
+  const setNotificationsRef = useRef(setNotifications);
+  useEffect(() => {
+    isReadRef.current = isRead;
+    setNotificationsRef.current = setNotifications;
+  }, [isRead, setNotifications]);
+
   useEffect(() => {
     if (unreadCount > prevUnreadRef.current) {
       setIsPulsing(true);
@@ -115,7 +126,12 @@ export default function NotificationBell() {
       if (!res.ok) return;
 
       const data = (await res.json()) as ExternalNotification[];
-      setNotifications((current) => mergeNotifications(current, data, isRead));
+      // A poll that resolves after the wallet changed belongs to the previous
+      // wallet; merging it would mix its notifications into the new inbox.
+      if (!active) return;
+      setNotificationsRef.current((current) =>
+        mergeNotifications(current, data, isReadRef.current)
+      );
     };
 
     fetchNotifications();
@@ -125,7 +141,7 @@ export default function NotificationBell() {
       active = false;
       window.clearInterval(interval);
     };
-  }, [address, isRead, setNotifications]);
+  }, [address]);
 
   const handleOpen = () => {
     setOpen(true);
