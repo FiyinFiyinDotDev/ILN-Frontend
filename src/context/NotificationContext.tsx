@@ -112,10 +112,31 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, [storageKey, readKey]);
 
+  // Another tab on the same wallet marking notifications read must update this
+  // tab's list and unread count too; `storage` events only fire in other tabs.
+  useEffect(() => {
+    if (!readKey) return;
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== readKey) return;
+      const storedReads = loadReadMap(readKey);
+      setReadMap((prev) => ({ ...prev, ...storedReads }));
+      setNotificationsState((prev) => applyReadState(prev, storedReads));
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [readKey]);
+
+  // Read state only ever moves from unread to read (there is no "mark unread"),
+  // so merging with the persisted map is a safe union. It stops a tab holding a
+  // stale in-memory map from erasing reads another tab already saved.
   const persistReadMap = useCallback(
     (next: Record<string, boolean>) => {
-      if (!readKey) return;
-      localStorage.setItem(readKey, JSON.stringify(next));
+      if (!readKey) return next;
+      const merged = { ...loadReadMap(readKey), ...next };
+      localStorage.setItem(readKey, JSON.stringify(merged));
+      return merged;
     },
     [readKey]
   );
@@ -180,15 +201,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const markAsRead = useCallback(
     (id: string) => {
-      setReadMap((prev) => {
-        const next = { ...prev, [id]: true };
-        persistReadMap(next);
-        return next;
-      });
+      const merged = persistReadMap({ [id]: true });
+      setReadMap((prev) => ({ ...prev, ...merged }));
       setNotificationsState((prev) => {
-        const next = prev.map((notification) =>
-          notification.id === id ? { ...notification, read: true } : notification
-        );
+        const next = applyReadState(prev, merged);
         persistNotifications(next);
         return next;
       });
@@ -202,8 +218,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       prev.forEach((notification) => {
         nextRead[notification.id] = true;
       });
-      setReadMap(nextRead);
-      persistReadMap(nextRead);
+      setReadMap(persistReadMap(nextRead));
 
       const next = prev.map((notification) => ({
         ...notification,

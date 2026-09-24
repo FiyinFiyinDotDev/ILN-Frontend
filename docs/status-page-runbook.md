@@ -145,3 +145,4 @@ Record rehearsal results (date, operator, pass/fail for each step) in a comment 
 - [Incident Response Process](./incident-response.md)
 - [Game-Day Exercise Report](./game-day-exercise-report.md)
 - [Sentry Integration](./sentry-integration.md)
+- [Status Page & Incident Tooling Readiness Report](./status-page-incident-tooling-readiness-report.md) — what is automated, what is still manual, and open gaps (#940)

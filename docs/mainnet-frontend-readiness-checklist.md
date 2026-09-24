@@ -32,6 +32,7 @@ Status legend: `Not started`, `In progress`, `Blocked`, `Complete`.
 | User-facing launch notes | Mainnet usage, honest change assessment, and feature-availability notes. | Release lead | Complete | [Launch Notes](mainnet-launch-notes.md) |
 | Incident response | Escalation, kill-switch, and user-communication procedures for frontend incidents. | Frontend lead | Complete | [Incident Response](incident-response.md) |
 | Status page runbook | Instatus status page update procedure and quarterly rehearsal checklist. | Comms lead | Complete | [Status Page Runbook](status-page-runbook.md) |
+| Status page & incident tooling readiness | Consolidated status of status-page automation and incident tooling; automation items #934 to #938, #871, and #872 are still open. | Comms lead | In progress | [Readiness Report](status-page-incident-tooling-readiness-report.md) |
 | Cross-repo incident coordination | Frontend ↔ smart-contract handoff protocol with acknowledgement targets and evidence retention. | Frontend lead | Complete | [Cross-Repo Coordination](cross-repo-incident-coordination.md) |
 | Game-day exercise record | Structured multi-failure tabletop validating the incident runbooks. | Security lead | Complete | [Game-Day Report](game-day-exercise-report.md) |
 | Monitoring runbook | Health checks, alerting, log retention, and on-call routing guidance. | Infrastructure lead | Complete | [Monitoring Runbook](monitoring-runbook.md) |

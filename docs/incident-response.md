@@ -342,3 +342,4 @@ For the full technical playbook — exact `pnpm` commands, forensic XDR audit st
 | [Game-Day Exercise Report](./game-day-exercise-report.md) | Frontend-focused SEV-1 game-day findings and identified gaps (#704) |
 | [Sentry Integration](./sentry-integration.md) | Error tracking setup, alert thresholds, CSP pipeline integration (#706) |
 | [Compromised Dependency Playbook](./compromised-dependency-playbook.md) | Technical response steps for supply-chain compromise (#707) |
+| [Status Page & Incident Tooling Readiness Report](./status-page-incident-tooling-readiness-report.md) | Consolidated readiness of status-page and incident tooling, with open gaps (#940) |

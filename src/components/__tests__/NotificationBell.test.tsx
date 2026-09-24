@@ -123,4 +123,61 @@ describe('NotificationBell', () => {
 
     expect(screen.queryByTestId('notification-service-unavailable')).not.toBeInTheDocument();
   });
+
+  it('does not re-poll the notifications service when read state changes', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => [] });
+    const { isRead, setNotifications } = notificationState;
+
+    const { rerender } = render(<NotificationBell />);
+    await flush();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // Marking a notification read hands the bell new context callbacks.
+    notificationState.isRead = vi.fn(() => true);
+    notificationState.setNotifications = vi.fn();
+    rerender(<NotificationBell />);
+    await flush();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    notificationState.isRead = isRead;
+    notificationState.setNotifications = setNotifications;
+  });
+
+  it('ignores a poll that resolves after the wallet changed', async () => {
+    let resolveFirstPoll: (value: unknown) => void = () => {};
+    fetchMock
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () =>
+          new Promise((resolve) => {
+            resolveFirstPoll = resolve;
+          }),
+      })
+      .mockResolvedValue({ ok: false, status: 503 });
+
+    const { rerender } = render(<NotificationBell />);
+    await flush();
+
+    walletState.address = 'GOTHER';
+    rerender(<NotificationBell />);
+    await flush();
+
+    await act(async () => {
+      resolveFirstPoll([
+        {
+          id: 'previous-wallet',
+          type: 'funded',
+          title: 'Invoice funded',
+          message: 'msg',
+          createdAt: '2026-01-01T00:00:00Z',
+          read: false,
+        },
+      ]);
+    });
+    await flush();
+
+    expect(fetchMock).toHaveBeenLastCalledWith('/api/notifications/GOTHER');
+    expect(notificationState.setNotifications).not.toHaveBeenCalled();
+  });
 });
