@@ -38,6 +38,16 @@ export const governanceKeys = {
   parameterUpdates: ['parameter-updates'] as const,
 };
 
+export const protocolKeys = {
+  /** Public protocol status (paused/unpaused). */
+  status: ['protocol-status'] as const,
+};
+
+export const adminKeys = {
+  /** Admin action audit log history. */
+  actionHistory: ['admin-action-history'] as const,
+};
+
 /**
  * Recommended cache timings per query type. Centralised so the trade-off
  * between freshness and request volume is documented in one place.

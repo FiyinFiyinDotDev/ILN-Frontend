@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   LineChart,
   Line,
@@ -17,6 +17,9 @@ import {
   MonthlyDefaultBucket,
   MonthlyDefaultWithMA,
 } from '@/utils/defaultRate';
+import IndexerUnavailableNotice, {
+  shouldUseDevMockFallback,
+} from '@/components/IndexerUnavailableNotice';
 
 const CHART_TICK_STYLE = {
   fill: 'var(--color-on-surface-variant, #94a3b8)',
@@ -94,6 +97,8 @@ function generateMockDefaults(): MonthlyDefaultBucket[] {
 export default function DefaultRateChart() {
   const [chartData, setChartData] = useState<MonthlyDefaultWithMA[]>([]);
   const [loading, setLoading] = useState(true);
+  const [unavailable, setUnavailable] = useState(false);
+  const [requestId, setRequestId] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -110,13 +115,18 @@ export default function DefaultRateChart() {
         const mockData = generateMockDefaults();
         const withMA = calculateMovingAverage(mockData, 1);
         setChartData(withMA);
-      } finally {
-        setLoading(false);
+      } else {
+        setChartData([]);
+        setUnavailable(true);
       }
-    };
-
-    fetchData();
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void fetchData();
+  }, [requestId, fetchData]);
 
   const currentRate = useMemo(() => {
     if (chartData.length === 0) return 0;
@@ -185,7 +195,14 @@ export default function DefaultRateChart() {
           </div>
         )}
 
-        {chartData.length === 0 && !loading ? (
+        {unavailable ? (
+          <div className="flex h-full items-center">
+            <IndexerUnavailableNotice
+              dataSource="Default-rate history"
+              onRetry={() => setRequestId((id) => id + 1)}
+            />
+          </div>
+        ) : chartData.length === 0 && !loading ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-outline-variant/20">
             <span className="material-symbols-outlined text-outline-variant/40 text-4xl">
               bar_chart

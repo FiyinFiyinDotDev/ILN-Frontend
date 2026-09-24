@@ -68,7 +68,9 @@ export default function TestnetFaucetButton() {
       updateToast(toastId, {
         type: 'success',
         title: 'Testnet XLM received',
-        message: `Funded ${fundedAmount.toFixed(2)} XLM. Current balance: ${nextBalance.toFixed(2)} XLM.`,
+        message: `Funded ${fundedAmount.toFixed(2)} XLM. Current balance: ${nextBalance.toFixed(
+          2
+        )} XLM.`,
       });
     } catch (error) {
       updateToast(toastId, {

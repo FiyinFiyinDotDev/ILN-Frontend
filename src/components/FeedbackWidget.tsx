@@ -184,7 +184,9 @@ export default function FeedbackWidget() {
                         aria-label={`${star} stars`}
                       >
                         <span
-                          className={`material-symbols-outlined ${rating >= star ? 'fill-[1]' : ''}`}
+                          className={`material-symbols-outlined ${
+                            rating >= star ? 'fill-[1]' : ''
+                          }`}
                         >
                           star
                         </span>
