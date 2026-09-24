@@ -18,6 +18,9 @@ This directory contains the main contributor and operations documentation for th
 - **[accessibility-implementation-summary.md](accessibility-implementation-summary.md)** - Summary of accessibility implementation work and supporting details.
 - **[screen-reader-testing-guide.md](screen-reader-testing-guide.md)** - Manual testing checklist for screen-reader and keyboard accessibility.
 - **[accessibility-conformance-statement.md](accessibility-conformance-statement.md)** - Public-facing WCAG 2.1 AA target, verification summary, and known limitations.
+- **[bundle-size.md](bundle-size.md)** - Bundle size tracking strategy, threshold policy, and how to interpret CI's bundle-size PR comments.
+- **[performance-monitoring.md](performance-monitoring.md)** - Real-user Core Web Vitals (RUM) capture and review, complementing the synthetic Lighthouse CI budgets.
+- **[load-testing.md](load-testing.md)** - Large-scale load testing procedures and results for mainnet-scale invoice volumes.
 
 ## Product and Domain Documentation
 
@@ -31,6 +34,32 @@ This directory contains the main contributor and operations documentation for th
 - **[backend-checklist-cross-link-coordination.md](backend-checklist-cross-link-coordination.md)** - Coordination record for cross-linking the smart-contract repo's mainnet launch checklist to the frontend readiness checklist.
 - **[mainnet-frontend-readiness-checklist.md](mainnet-frontend-readiness-checklist.md)** - Consolidated frontend mainnet readiness checklist tying every category's closing artifact together for the go/no-go decision.
 - **[status-page-incident-tooling-readiness-report.md](status-page-incident-tooling-readiness-report.md)** - Readiness of the status page and incident tooling: what is automated, what is still manual, and open gaps.
+- **[contract-integration-status.md](contract-integration-status.md)** - Which frontend features are backed by live on-chain contracts versus stubbed, derived, or deferred.
+- **[cross-repo-contract-sync-readiness.md](cross-repo-contract-sync-readiness.md)** - Readiness report for the joint frontend/backend contract-sync rehearsal.
+- **[graphql-query-guidelines.md](graphql-query-guidelines.md)** - Guidelines for implementing GraphQL queries if/when the indexer's GraphQL endpoint is adopted.
+- **[notifications-service.md](notifications-service.md)** - Failure modes for the two backend notifications-service surfaces the frontend consumes.
+- **[payer-routes.md](payer-routes.md)** - Audit of payer-related routes.
+- **[route-map.md](route-map.md)** - Every canonical page route, its purpose, primary consumer, and active redirects.
+- **[pwa-manifest-audit.md](pwa-manifest-audit.md)** - Production-readiness audit of the PWA manifest, icons, and install-prompt `<head>` tags.
+- **[trust-critical-surface-walkthrough.md](trust-critical-surface-walkthrough.md)** - Live maintainer walkthrough script and sign-off record for vote casting, dark-feature flags, and admin actions.
+- **[good-first-issue-candidates.md](good-first-issue-candidates.md)** - Curated list of self-contained issues suited to newcomers.
+
+## Operations, Security, and Incident Readiness
+
+- **[mainnet-deployment-runbook.md](mainnet-deployment-runbook.md)** - Frontend-specific counterpart to the smart-contract mainnet deployment process; covers the continuous-deploy model.
+- **[mainnet-launch-notes.md](mainnet-launch-notes.md)** - User-facing mainnet launch narrative: what changes at cutover and what to expect.
+- **[monitoring-runbook.md](monitoring-runbook.md)** - Monitoring strategy and its integration with backend services.
+- **[incident-response.md](incident-response.md)** - Official frontend security incident response process.
+- **[cross-repo-incident-coordination.md](cross-repo-incident-coordination.md)** - Protocol for coordinating incidents across frontend, smart contracts, indexer, and notifications.
+- **[status-page-runbook.md](status-page-runbook.md)** - Status page setup and Communications Lead runbook.
+- **[alert-routing-integration.md](alert-routing-integration.md)** - Wires frontend status-page component health into the shared alert-routing path.
+- **[game-day-exercise-report.md](game-day-exercise-report.md)** - Report from the frontend-focused incident game-day exercise (SEV-1/SEV-2 scenarios).
+- **[compromised-dependency-playbook.md](compromised-dependency-playbook.md)** - Incident response steps for a compromised npm dependency scenario.
+- **[indexer-downtime.md](indexer-downtime.md)** - How the frontend behaves, and which features fall back, when the indexer is down or degraded.
+- **[security.md](security.md)** - Frontend security, SRI, wallet isolation, and transaction hardening policy.
+- **[localstorage-sensitivity-audit.md](localstorage-sensitivity-audit.md)** - Audit of every localStorage key written by the frontend and its privacy/security classification.
+- **[sentry-integration.md](sentry-integration.md)** - Production error tracking integration: source maps, alerting, and CSP violation feed.
+- **[troubleshooting.md](troubleshooting.md)** - Common local setup issues, symptoms, and resolution steps.
 
 ## Hooks and Examples
 
