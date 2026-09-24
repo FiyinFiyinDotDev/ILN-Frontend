@@ -155,7 +155,7 @@ Before pushing a branch or opening a PR, run:
 pnpm run verify
 ```
 
-This runs the same checks as CI, in the same order, in a single command: `lint` → `env:check` → `format:check` → `tsc --noEmit` → `test`. A passing `pnpm run verify` locally means the CI `lint` and `tests` jobs will pass too, so use it instead of running each check separately to avoid round-trips on avoidable CI failures.
+This runs the same checks as CI, in the same order, in a single command: `lint` → `env:check` → `i18n:check` → `format:check` → `tsc --noEmit` → `test`. A passing `pnpm run verify` locally means the CI `lint` and `tests` jobs will pass too, so use it instead of running each check separately to avoid round-trips on avoidable CI failures.
 
 ### Issue and PR Assignment Policy
 
@@ -168,6 +168,12 @@ The thresholds and message text are configurable through the workflow inputs and
 Issues that are assigned to a contributor are expected to move forward promptly. If an issue remains assigned without a linked PR update for 7 days, the repository automation will post a reminder comment. If the issue still shows no linked PR activity after 14 days, the assignee is automatically removed so the issue can be claimed by someone else.
 
 The thresholds and message text are configurable through the workflow inputs and repository variables used by [.github/workflows/stale-assignments.yml](.github/workflows/stale-assignments.yml). Contributors should keep assignments current, open or update a linked PR early, and unassign themselves if they can no longer work on the issue.
+
+### Before Proposing Architecture Changes
+
+Read [docs/architecture.md](docs/architecture.md) first. Some questions have already been decided, and reopening one without that context wastes review time:
+
+- **GraphQL**: the frontend reads data over REST, Soroban RPC, Horizon, and the indexer's REST/WebSocket endpoints. The decision to adopt, defer, or drop GraphQL is made in [#929](https://github.com/Invoice-Liquidity-Network/ILN-Frontend/issues/929) and recorded in the status section of [docs/graphql-query-guidelines.md](docs/graphql-query-guidelines.md). Read both before proposing a GraphQL client or layer.
 
 ### Code Style and Formatting
 
@@ -334,7 +340,7 @@ This convention aligns with our commit message format and helps with changelog g
 
 1. **Code Quality**:
 
-   - Run `pnpm run verify` (lint, env:check, format:check, tsc --noEmit, test) and ensure it passes — this mirrors CI exactly
+   - Run `pnpm run verify` (lint, env:check, i18n:check, format:check, tsc --noEmit, test) and ensure it passes — this mirrors CI exactly
    - Run `npm run lint:fix` to fix all linting errors
    - Run `npm run format` to ensure consistent formatting
    - Ensure zero ESLint warnings
@@ -468,6 +474,10 @@ ILN supports multiple languages using i18next. All user-facing strings must be e
 
    supportedLngs: ["en", "es", "[locale]"],
    ```
+
+Then run `pnpm run i18n:check` to confirm the new locale has exactly the same keys as English. CI runs the same check and fails on any missing or extra key.
+
+See the [locale expansion plan](docs/i18n.md#locale-expansion-plan) for how the next locale is chosen and who owns its translations.
 
 ### i18n Configuration
 

@@ -68,6 +68,9 @@ jobs:
       - name: Check configuration drift
         run: pnpm run env:drift-check
 
+      - name: Check locale key parity
+        run: pnpm run i18n:check
+
       - name: Check formatting with Prettier
         run: pnpm run format:check
 

@@ -325,3 +325,5 @@ See docs/monitoring-runbook.md for monitoring strategy and incident response pro
 ## Contributor Guidance
 
 When adding a route, update this document and the README route summary if the product surface changes. When adding an env var, update `.env.local.example` or `.env.local.example.allowlist` in the same change and run `pnpm run env:check`.
+
+The frontend has no GraphQL layer: reads go through the REST, Soroban RPC, Horizon, and indexer paths described in [Data Flow](#data-flow). The decision to adopt, defer, or drop GraphQL is made in [#929](https://github.com/Invoice-Liquidity-Network/ILN-Frontend/issues/929) and recorded in the status section of [docs/graphql-query-guidelines.md](graphql-query-guidelines.md). Read both before proposing a GraphQL client or layer.
