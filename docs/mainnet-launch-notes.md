@@ -19,7 +19,7 @@ The ILN web application now connects to the **Stellar public network** (mainnet)
 
 - **Real transactions**: All invoice operations, payments, and liquidity pool interactions now occur on the live Stellar network with real XLM and token values.
 - **Real wallet balances**: Your connected wallet will show your actual mainnet balances, not testnet funds.
-- **Real contract interactions**: The app now interacts with the deployed mainnet smart contracts for invoice factoring, governance, and other protocol features.
+- **Real contract interactions**: The app now interacts with the deployed mainnet smart contracts for invoice factoring and liquidity provision. Governance is **read-only** at launch (see [Governance at Launch](#governance-at-launch)).
 
 ### What You Need to Do
 
@@ -57,7 +57,7 @@ The following features are available immediately at mainnet launch:
 - **Liquidity Provisioning**: Provide liquidity to the invoice factoring pool
 - **Wallet Connection**: Connect your mainnet wallet (Freighter and compatible wallets)
 - **Leaderboard**: View the live mainnet leaderboard for top liquidity providers
-- **Governance View**: View governance proposals and voting status (read-only at launch)
+- **Governance View**: View governance proposals and voting status. This is **read-only**: voting, proposal execution, and proposal creation are not live at launch (see [Governance at Launch](#governance-at-launch)).
 
 ### Features Shipping Dark (Disabled by Default)
 
@@ -71,6 +71,49 @@ The following features are **not enabled at launch** and will be enabled in futu
 
 ---
 
+## Launch Readiness Status
+
+This section is the plain-language "are we ready?" story behind the [Frontend Mainnet Readiness Checklist](mainnet-frontend-readiness-checklist.md), updated at the close of the final SCF/mainnet frontend readiness sign-off batch. The checklist holds the item-by-item status; this section explains what those statuses mean for launch.
+
+**Overall: not yet ready for mainnet cutover.** The core invoice-factoring and liquidity journeys, accessibility, incident tooling, and performance work are in place. Governance and admin write actions do not yet reach the chain, and the live maintainer sign-off has not taken place. Launch should wait for the blockers listed below, or proceed only with governance and admin writes explicitly disabled and that decision recorded in the sign-off.
+
+### Governance at Launch
+
+- **Reads work; writes are not live.** Proposal lists, vote tallies, and voting power are read from the governance contract when `NEXT_PUBLIC_GOVERNANCE_CONTRACT_ID` is configured. If it is not configured, or the contract does not answer, the UI falls back to built-in sample proposals. Mainnet deploys **must** set this variable.
+- **Voting, executing, vetoing, and creating proposals are still simulated in the frontend.** They wait on a fixed delay and return a placeholder transaction hash without signing or submitting anything (walkthrough findings F1–F2). They must stay behind the "not yet live" treatment (#850) and must not be presented as on-chain actions until the governance write-path launch gate (#852) closes.
+- **Latency is understood ahead of wiring.** Every network stage a real governance write will use was measured on testnet. Reads take ~0.3 s (p50) and submit → confirmed takes ~5 s (p50) / ~5.8 s (p95), within the new governance latency SLO. A real vote will take noticeably longer than the simulated 2 s, so the UI needs a distinct "confirming on-chain" state when writes go live ([SLO 5](slos.md)).
+
+### Dark Features
+
+- **Insurance Pool, Oracle badge, and Invoice NFT ship disabled** (`NEXT_PUBLIC_INSURANCE_POOL_ENABLED`, `NEXT_PUBLIC_ORACLE_ENABLED`, `NEXT_PUBLIC_NFT_ENABLED` all default to `false`; see [Feature Flags](feature-flags.md)).
+- **These are build-time flags.** Enabling one means changing the environment variable and redeploying; `/admin/flags` only displays the current values. The flag-flip step of the maintainer walkthrough verifies that flipping one flag in a test environment exposes only that feature and that production defaults stay off. That walkthrough has **not yet been conducted**.
+
+### Admin Surface Hardening
+
+- **In place:** sensitive admin actions now go through an accessible in-page confirmation dialog instead of `window.confirm`, and `/admin` is gated to the configured governance admin address. The admin audit log shows on-chain multisig signer rotations (flagged as security-sensitive) and parameter updates.
+- **Not yet launch-ready:** pausing/unpausing the protocol and executing ready proposals do not call the contract. Approving or removing an accepted token asks the admin wallet to sign but never submits the transaction, yet the UI reports success. None of these actions are audit-log event sources (walkthrough findings F2–F4, F8). Until fixed, protocol-level admin operations must be performed directly against the contract with the multisig, not through the frontend.
+
+### Performance
+
+- The batch was checked against its pre-batch baseline with the repository's Lighthouse CI configuration. **No Core Web Vitals regression was found** beyond run-to-run noise ([Lighthouse CI — Batch Regression Check](LIGHTHOUSE_CI.md#batch-regression-check--final-scfmainnet-frontend-readiness-sign-off-959)).
+- The check found, and fixed, a broken production build on `dev` and a Lighthouse workflow that never ran on `dev` pull requests.
+- Known, pre-existing budget breaches are accepted as residual risk for launch: home-page layout shift (CLS ≈ 0.13 vs 0.1 budget) and page weight well above the 200 KB budget, mostly the icon font and home-page transaction history.
+
+### Remaining Blockers
+
+Taken from the readiness checklist at the close of this batch:
+
+| Blocker                                                                                                         | Checklist status                                                          |
+| --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Live maintainer walkthrough and sign-off of trust-critical surfaces, including a decision on each finding F1–F8 | Blocked — [Walkthrough & Sign-off](trust-critical-surface-walkthrough.md) |
+| Governance write paths wired to the contract, or explicitly disabled for launch (#850, #852)                    | Blocked (walkthrough F1–F2)                                               |
+| Admin pause / execute / token actions submitted on-chain and audit-logged, or removed from the launch UI        | Blocked (walkthrough F3–F4, F8)                                           |
+| Cumulative batch bundle-size verdict                                                                            | In progress                                                               |
+| Status-page automation still open (#934, #871, #872; #935–#938 shipped)                                         | In progress                                                               |
+| Contract integration status review                                                                              | In progress                                                               |
+| Backend checklist cross-link                                                                                    | In progress                                                               |
+| Per-area maintainer sign-off (accessibility, performance, operations, security)                                 | Not signed                                                                |
+
 ## What's New vs. Testnet
 
 ### Honest Assessment
@@ -78,17 +121,20 @@ The following features are **not enabled at launch** and will be enabled in futu
 We're committed to honest, non-inflated communication. Here's what's actually new at mainnet launch:
 
 **What's New:**
+
 - Real transactions and balances on the Stellar public network
 - Live invoice factoring with real economic value
 - Mainnet-specific contract IDs and RPC endpoints
 - Production-grade security hardening (DNSSEC, CAA records, secret rotation)
 
 **What's the Same:**
+
 - The UI and user experience are identical to testnet
 - The feature set is intentionally conservative (see "Features Shipping Dark" above)
 - No new product features are being introduced at launch—this is a network cutover, not a feature release
 
 **What's Not Included:**
+
 - No "v2" or major redesign at launch
 - No new token launches or airdrops
 - No experimental features—only core invoice factoring functionality
