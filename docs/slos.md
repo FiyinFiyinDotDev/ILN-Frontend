@@ -115,6 +115,49 @@ $$\text{Synthetic Check Pass Rate} \ge \mathbf{99.95\%}$$
 
 ---
 
+### SLO 5: Governance Transaction Latency (#960)
+
+Governance actions are meant to build, simulate, and submit real Soroban transactions. **As of this batch they still do not.** `castVote`, `executeProposal`, `vetoProposal`, and `createProposal` in `src/utils/governance.ts` wait on a fixed `setTimeout` (2,000 / 2,000 / 1,200 / 2,500 ms), update in-memory mock state, and return a random fake transaction hash (tracked by #850 and #852). In addition, `NEXT_PUBLIC_GOVERNANCE_CONTRACT_ID` is unset in `.env.local.example`, so on testnet governance reads target the invoice contract. That contract does not expose `list_proposals`, so after one real round trip the page falls back to `MOCK_PROPOSALS`.
+
+The write-path journey therefore cannot be timed end to end yet. Instead, every **network stage** a real governance write will go through was measured against live Soroban testnet RPC with `scripts/measure-governance-latency.mjs`, and those figures set the targets below.
+
+#### SLO Targets (p95, excluding the user's time in the wallet signing prompt)
+
+| Stage                         | What it covers                                                                                             | p95 Target                                                        |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| **Governance read**           | `simulateTransaction(list_proposals)`, the call `fetchProposals()` makes                                   | **≤ 1.0s**                                                        |
+| **Pre-signature preparation** | `getAccount` + `prepareTransaction(cast_vote)` (simulation, footprint, fee) before the wallet prompt opens | **≤ 1.5s**                                                        |
+| **Submit → confirmed**        | `sendTransaction` + polling `getTransaction` until `SUCCESS`                                               | **≤ 10s** (about one Soroban ledger close plus one missed ledger) |
+
+#### Measured Latency (Soroban testnet, `https://soroban-testnet.stellar.org`, 2026-09-24)
+
+| Stage                                                        | Samples |      p50 |      p95 |      Max | Meets target |
+| ------------------------------------------------------------ | ------: | -------: | -------: | -------: | :----------: |
+| Governance read                                              |      20 |   323 ms |   498 ms |   733 ms |     Yes      |
+| Account fetch (`getAccount`)                                 |      20 |   268 ms |   347 ms |   538 ms |      —       |
+| Build + simulate (`prepareTransaction`)                      |      20 |   283 ms |   583 ms |   599 ms |      —       |
+| Pre-signature preparation (account + prepare, summed at p95) |       — |  ~550 ms |  ~930 ms |        — |     Yes      |
+| Submit → confirmed (real transaction)                        |      10 | 4,977 ms | 5,830 ms | 6,444 ms |     Yes      |
+
+Method notes:
+
+- The governance read and `cast_vote` preparation were sent to the address the app actually resolves as the governance contract on testnet. Neither function exists there, so the simulation returns a contract error, but the RPC round trip, which is what the user waits on, is real.
+- Submit → confirmed used a friendbot-funded throwaway account submitting a real Soroban invocation (the native XLM asset contract's read-only `balance`). The transaction goes through consensus but changes no state. The timing also includes that transaction's own `getAccount` and `prepareTransaction`.
+- Re-run with `node scripts/measure-governance-latency.mjs --samples 20 --submit` (testnet only for `--submit`).
+
+#### Verdict and UX Implications
+
+- **The measured latency meets every target above.** The network stages of a real governance write are well inside budget.
+- **The real write path is slower than the mock suggests.** After signing, a real vote takes about 5–6 s to confirm, against the mock's flat 2 s. The only feedback today is the button label `Voting…` (`src/components/VoteSection.tsx`). When the write paths are wired (#852), show a separate "Confirming on-chain…" state after the wallet returns, so a 5–10 s wait does not look like a hang. The existing `gov_sign_requested` funnel stage (SLO 3) should mark the start of that state.
+- **The write-path SLO is defined but unverified end to end.** Once the governance contract is deployed and `NEXT_PUBLIC_GOVERNANCE_CONTRACT_ID` is set, rerun the script against it and replace this table with real `cast_vote` figures.
+
+#### Residual Risk
+
+- Governance write actions are mocked and return fake transaction hashes. They must stay behind the "not yet live" treatment (#850) and must not be presented as on-chain actions until #852's launch gate is complete.
+- The deployed testnet invoice contract (`CD3TE3…WYJC`) also no longer exposes `get_invoice_count`, which `src/utils/soroban.ts` still calls. This is found contract drift outside governance, noted here for the contract-integration status review.
+
+---
+
 ## 3. Mapping Matrix: SLOs to Concrete Monitoring Signals
 
 Each frontend SLO is tied directly to an automated monitoring signal established in the codebase:
@@ -126,6 +169,7 @@ Each frontend SLO is tied directly to an automated monitoring signal established
 | **Wallet Connection**           | **Issue 54 (Wallet Telemetry)**       | `src/context/WalletContext.tsx`                    | Analytics & Error Events | $\ge 99.0\%$ connection success rate                             |
 | **Transaction Signing**         | **Issue 54 / 706 (Signing Pipeline)** | `src/lib/signing-alert.ts`, `src/lib/analytics.ts` | Funnel & Signing Monitor | $\ge 95.0\%$ completion; P1 on failure rate spike ($> 20\%$)     |
 | **Deployment Uptime**           | **Issue 97 (Synthetic Integration)**  | `e2e/synthetic-integration-health.spec.ts`         | Scheduled Synthetic E2E  | $\ge 99.95\%$ synthetic pass rate                                |
+| **Governance Latency**          | **Issue 960 (Governance Tx Timing)**  | `scripts/measure-governance-latency.mjs`           | Measured RPC Latency     | p95 read $\le 1\text{s}$; p95 submit→confirmed $\le 10\text{s}$  |
 | **Contract / Admin Visibility** | **Issue 103 / Issue 3 (Audit Trail)** | `src/utils/governance.ts`, `app/admin/page.tsx`    | On-Chain Event Monitor   | Immutable `SignerRotated` & `ParameterUpdated` log               |
 
 ---
