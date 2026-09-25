@@ -164,6 +164,66 @@ describe('governance – createProposal', () => {
     const created = MOCK_PROPOSALS.find((p) => p.id === result.proposalId);
     expect(created?.parameterChanges).toBeDefined();
   });
+
+  it('persists the proposal payload and vote state for the created record', async () => {
+    vi.useFakeTimers();
+    const payload: CreateProposalPayload = {
+      formType: 'RemoveToken',
+      title: 'Remove EURC',
+      description: 'Remove EURC from active token set',
+      removeTokenAddress: 'CDTKPWPLOURQA2SGTKTUQOWRCBZEORB4BWBOMJ3D3ZTQQSGE5F6JBQLV',
+    };
+
+    const resultPromise = createProposal(payload, SIGNER, mockSignTx);
+    await vi.runAllTimersAsync();
+    const result = await resultPromise;
+    const created = MOCK_PROPOSALS.find((p) => p.id === result.proposalId);
+
+    expect(created).toMatchObject({
+      proposer: SIGNER,
+      title: payload.title,
+      description: payload.description,
+      type: 'ProtocolUpgrade',
+      status: 'Active',
+      quorumRequired: 100_000,
+    });
+    expect(created?.parameterChanges?.[0]).toMatchObject({
+      parameter: 'accepted_tokens',
+      newValue: expect.stringContaining('removes EURC'),
+    });
+    vi.useRealTimers();
+  });
+});
+
+describe('governance – stateful write paths', () => {
+  it('updates the right vote bucket and persists userVote for the proposal', async () => {
+    vi.useFakeTimers();
+    const proposalPromise = createProposal(
+      {
+        formType: 'FeeRate',
+        title: 'Isolated vote assertion',
+        description: 'Uses a fresh proposal to avoid prior test state drift.',
+        newValueBps: 75,
+      },
+      SIGNER,
+      mockSignTx
+    );
+    await vi.runAllTimersAsync();
+    const proposed = await proposalPromise;
+
+    const resultPromise = castVote(proposed.proposalId, 'For', SIGNER, mockSignTx);
+    await vi.runAllTimersAsync();
+    const result = await resultPromise;
+    const created = MOCK_PROPOSALS.find((p) => p.id === proposed.proposalId)!;
+
+    expect(typeof result).toBe('string');
+    expect(result.length).toBeGreaterThan(0);
+    expect(getUserVote(proposed.proposalId)).toBe('For');
+    expect(created.votesFor).toBe(1250);
+    expect(created.votesAgainst).toBe(0);
+    expect(created.votesAbstain).toBe(0);
+    vi.useRealTimers();
+  });
 });
 
 describe('governance – vote helper functions', () => {
