@@ -189,6 +189,49 @@ If you suspect a security issue:
 
 ---
 
+---
+
+## Dark-Feature Re-enablement Readiness Sign-off
+
+This section is the **closing gate** for the dark-feature re-enablement category (#881). Before the launch notes can claim readiness for any dark feature, every row in the table below must be **Complete** and the maintainer sign-off must be recorded.
+
+The three features shipping dark at launch are gated by build-time environment flags (see [Feature Flags](feature-flags.md)). Enabling one means changing the flag and redeploying — there is no runtime toggle. The readiness package for each feature must exist and be current before that flag is flipped.
+
+### Required readiness artifacts
+
+Each dark feature requires the following artifacts before its flag is cleared for mainnet:
+
+1. **Smoke-test coverage** — at least one mainnet-smoke test exercises the feature surface after the flag is on (`e2e/mainnet-smoke.spec.ts`).
+2. **Visual baseline** — a Chromatic story baseline capturing the enabled state exists and is current (`pnpm run chromatic`).
+3. **Rollback runbook step** — [docs/incident-response.md](incident-response.md) or [docs/mainnet-deployment-runbook.md](mainnet-deployment-runbook.md) contains an explicit step for disabling the feature (flipping the flag back to `false` and redeploying).
+4. **Feature flag review** — the flag's entry in [docs/feature-flags.md](feature-flags.md) is current and the production default is confirmed `false`.
+
+### Per-feature readiness dashboard
+
+| Feature | Flag | Smoke test | Visual baseline | Rollback step | Flag review | Status |
+| ------- | ---- | ---------- | --------------- | ------------- | ----------- | ------ |
+| Insurance Pool | `NEXT_PUBLIC_INSURANCE_POOL_ENABLED` | Not yet — no mainnet smoke test targets this surface | Not yet — no Chromatic story for enabled state | Covered by general flag-flip rollback in deployment runbook §5 | Confirmed `false` default in [feature-flags.md](feature-flags.md) | **Not ready** |
+| Oracle Badge | `NEXT_PUBLIC_ORACLE_ENABLED` | Not yet — no mainnet smoke test targets this surface | Not yet — no Chromatic story for enabled state | Covered by general flag-flip rollback in deployment runbook §5 | Confirmed `false` default in [feature-flags.md](feature-flags.md) | **Not ready** |
+| Invoice NFT | `NEXT_PUBLIC_NFT_ENABLED` | Not yet — no mainnet smoke test targets this surface | Not yet — no Chromatic story for enabled state | Covered by general flag-flip rollback in deployment runbook §5 | Confirmed `false` default in [feature-flags.md](feature-flags.md) | **Not ready** |
+
+**Overall status: Not ready.** No dark feature has a complete readiness package. Smoke-test and visual-baseline gaps must be closed before any flag is eligible to flip. The table above is the go/no-go surface; update each cell when the artifact is delivered.
+
+### Backend checklist cross-link
+
+The smart-contract repository's [mainnet launch checklist](https://github.com/Invoice-Liquidity-Network/ILN-Smart-Contract/blob/dev/docs/mainnet-launch-checklist.md) carries a parallel set of dark-feature readiness gates for the contract side (contract audit status, address confirmation, and multisig signer verification for each dark contract). Both sides must be **Complete** before a flag is flipped. The coordination record for the two-way link is in [backend-checklist-cross-link-coordination.md](backend-checklist-cross-link-coordination.md).
+
+### Maintainer sign-off
+
+Fill this table after walking the dashboard above and confirming every artifact row that is needed for a flag flip is complete. One row per attending maintainer.
+
+| Maintainer (GitHub handle) | Date | Build / commit reviewed | Insurance Pool ready | Oracle Badge ready | Invoice NFT ready | Signed off | Notes |
+| -------------------------- | ---- | ----------------------- | -------------------- | ------------------ | ----------------- | ---------- | ----- |
+| | | | | | | | |
+
+Sign-off is complete only when at least one maintainer has signed off **and** every feature that is being enabled has a **Complete** row in the dashboard above. A feature may proceed to canary rollout independently once its own row is complete; all three do not need to be ready simultaneously.
+
+---
+
 ## Post-Launch Roadmap
 
 After the initial mainnet launch, we plan to:
