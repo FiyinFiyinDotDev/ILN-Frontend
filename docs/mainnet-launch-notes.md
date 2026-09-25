@@ -1,6 +1,6 @@
 # ILN Frontend Mainnet Launch Notes
 
-**Date:** [To be filled at launch]
+**Date:** Not applicable yet (pending mainnet deployment)
 **Version:** 1.0.0
 
 ---
@@ -174,8 +174,8 @@ If you suspect a security issue:
 ### Community
 
 - **GitHub Issues**: Report bugs and feature requests at [github.com/Invoice-Liquidity-Network/ILN-Frontend](https://github.com/Invoice-Liquidity-Network/ILN-Frontend)
-- **Discord**: [To be added] - Join for community support and updates
-- **Twitter**: [To be added] - Follow for announcements
+- **Discord**: Not applicable yet (tracked by backend support channels issue)
+- **Twitter**: Not applicable yet (tracked by backend support channels issue)
 
 ---
 
