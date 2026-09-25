@@ -6,6 +6,27 @@ vi.mock('@/context/WalletContext', () => ({
   useWallet: () => ({ address: 'GTESTWALLET123' }),
 }));
 
+const notificationsKey = 'iln-notifications:GTESTWALLET123';
+const readKey = 'iln-notification-read:GTESTWALLET123';
+
+function seedNotifications(ids: string[]) {
+  localStorage.setItem(
+    notificationsKey,
+    JSON.stringify(
+      ids.map((id, index) => ({
+        id,
+        category: 'invoice',
+        type: 'funded',
+        title: `Notification ${id}`,
+        message: 'Invoice funded',
+        href: '/dashboard',
+        createdAt: new Date(Date.UTC(2026, 0, index + 1)).toISOString(),
+        read: false,
+      }))
+    )
+  );
+}
+
 describe('NotificationContext', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -89,5 +110,68 @@ describe('NotificationContext', () => {
 
     expect(result.current.unreadCount).toBe(0);
     expect(result.current.notifications.every((n) => n.read)).toBe(true);
+  });
+
+  it('restores read state after a reload', () => {
+    seedNotifications(['n1', 'n2']);
+    const firstLoad = renderHook(() => useNotification(), {
+      wrapper: NotificationProvider,
+    });
+
+    act(() => {
+      firstLoad.result.current.markAsRead('n1');
+    });
+    firstLoad.unmount();
+
+    const reloaded = renderHook(() => useNotification(), {
+      wrapper: NotificationProvider,
+    });
+
+    expect(reloaded.result.current.isRead('n1')).toBe(true);
+    expect(reloaded.result.current.notifications.find((n) => n.id === 'n1')?.read).toBe(true);
+    expect(reloaded.result.current.unreadCount).toBe(1);
+  });
+
+  it('keeps reads saved by another tab when a tab with stale state marks a notification read', () => {
+    seedNotifications(['n1', 'n2']);
+    const tabA = renderHook(() => useNotification(), { wrapper: NotificationProvider });
+    // Storage events never reach the writing window, so tab B stays stale.
+    const tabB = renderHook(() => useNotification(), { wrapper: NotificationProvider });
+
+    act(() => {
+      tabA.result.current.markAsRead('n1');
+    });
+    act(() => {
+      tabB.result.current.markAsRead('n2');
+    });
+
+    expect(JSON.parse(localStorage.getItem(readKey) ?? '{}')).toEqual({ n1: true, n2: true });
+    expect(tabB.result.current.unreadCount).toBe(0);
+
+    tabA.unmount();
+    tabB.unmount();
+    const reloaded = renderHook(() => useNotification(), {
+      wrapper: NotificationProvider,
+    });
+
+    expect(reloaded.result.current.unreadCount).toBe(0);
+  });
+
+  it('applies read state written by another tab', () => {
+    seedNotifications(['n1', 'n2']);
+    const { result } = renderHook(() => useNotification(), {
+      wrapper: NotificationProvider,
+    });
+
+    expect(result.current.unreadCount).toBe(2);
+
+    act(() => {
+      localStorage.setItem(readKey, JSON.stringify({ n1: true }));
+      window.dispatchEvent(new StorageEvent('storage', { key: readKey }));
+    });
+
+    expect(result.current.isRead('n1')).toBe(true);
+    expect(result.current.notifications.find((n) => n.id === 'n1')?.read).toBe(true);
+    expect(result.current.unreadCount).toBe(1);
   });
 });

@@ -8,27 +8,7 @@ Thank you for your interest in contributing to the Invoice Liquidity Network (IL
 - **npm**: Version 9 or higher
 - **Git**: For version control
 
-## Issue Leveling and Label Curation
-
-To help contributors find tasks aligned with their experience and available time, we triage issues by **Complexity** and **Context/Familiarity requirements**. 
-
-### "Good First Issue" vs. "Trivial Complexity"
-
-- **Good First Issue**:
-  - **Context Requirement**: Low. A newcomer with no previous knowledge of our domain (Stellar/Soroban, invoice factoring, localized routing configurations) should be able to solve it using common web development skills.
-  - **Self-Contained**: The task has a clear start and end point, affects isolated files, and does not require complex integrations or cross-cutting structural modifications.
-  - **Examples**: Implementing helper scripts (such as `pnpm run clean`), writing troubleshooting documentation, adding static content/badges, fixing localized stylesheets.
-  - **Label**: `good-first-issue`
-
-- **Trivial Complexity**:
-  - **Context Requirement**: Variable (often High). While the code changes themselves might be extremely small (e.g. changing 2 lines in a React context or smart contract call), it requires specific familiarity with the codebase, history, or integration layers to understand *why* the change is needed and how to do it safely.
-  - **Examples**: Tweaking a Freighter smart contract connection event listener, altering a specific Supabase permission or RLS script.
-  - **Label**: `complexity: trivial`
-
-For a curated list of candidate issues matching these criteria, see [good-first-issue-candidates.md](docs/good-first-issue-candidates.md).
-
 ## Getting Started
-
 
 ### 1. Fork and Clone the Repository
 
@@ -55,20 +35,12 @@ The `prepare` script runs `husky` automatically, registering the hooks in `.husk
 
 ### What the hooks do
 
-| Hook         | Trigger      | Action                                                                                                                 |
-| ------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `pre-commit` | `git commit` | Rejects non-allowlisted staged files over 500 KB, then runs `eslint --fix` and `prettier --write` on staged files only |
-| `pre-push`   | `git push`   | Runs `tsc --incremental` to cache and catch type errors before pushing                                                 |
+| Hook         | Trigger      | Action                                                               |
+| ------------ | ------------ | -------------------------------------------------------------------- |
+| `pre-commit` | `git commit` | Runs `eslint --fix` and `prettier --write` on staged files only      |
+| `pre-push`   | `git push`   | Runs `tsc --noEmit` to catch type errors before the branch is pushed |
 
-### Husky Hook Performance & Caching
-
-To optimize the contributor experience, we audited the performance of the Husky hooks:
-- **`pre-commit` (`npx lint-staged`)**: Takes ~1.9s to run when no staged files need formatting, and typically under 5–10s for formatted staged edits.
-- **`pre-push` (`tsc`)**: Switching from a full typecheck (`npx tsc --noEmit`) to an incremental typecheck (`npx tsc --incremental`) improves performance significantly:
-  - **Cold Run (Full check / clean config)**: ~32.3 seconds.
-  - **Warm Run (Incremental / local cache)**: ~8.4 seconds (a ~74% speedup).
-
-The generated `tsconfig.tsbuildinfo` build cache file is ignored in `.gitignore` to keep git diffs clean.
+Hooks are scoped to staged files via `lint-staged`, so they typically complete in well under 10 seconds.
 
 ### Skipping hooks (not recommended)
 
@@ -83,12 +55,6 @@ git push --no-verify
 ```
 
 Do not make a habit of skipping — the same checks run in CI and will block your PR.
-
-### Large file policy
-
-New or modified tracked files must be 500 KB or smaller. The pre-commit hook checks staged Git blobs, and CI checks all tracked files so the policy also applies when hooks are bypassed. Optimize images and generated assets before committing them.
-
-Rare, necessary exceptions may be added as repository-relative glob patterns in [.large-file-allowlist](.large-file-allowlist), with a narrow scope and a justification in the pull request. Do not use the allowlist to avoid optimizing a file that can reasonably be reduced.
 
 ### Editor configuration
 
@@ -189,60 +155,53 @@ Before pushing a branch or opening a PR, run:
 pnpm run verify
 ```
 
-This runs the same checks as CI, in the same order, in a single command: `lint` → `env:check` → `format:check` → `tsc --incremental` → `test`. A passing `pnpm run verify` locally means the CI `lint` and `tests` jobs will pass too, so use it instead of running each check separately to avoid round-trips on avoidable CI failures.
+This runs the same checks as CI, in the same order, in a single command: `lint` → `env:check` → `i18n:check` → `format:check` → `tsc --noEmit` → `test`. A passing `pnpm run verify` locally means the CI `lint` and `tests` jobs will pass too, so use it instead of running each check separately to avoid round-trips on avoidable CI failures.
 
-### Troubleshooting Local vs CI Build Mismatch
+### Issue and PR Assignment Policy
 
-If a build or test run succeeds in the GitHub Actions CI environment but fails locally on your machine, it is often due to stale build artifact caches, Next.js build caches, or outdated storybook/test caches.
+Issues that are assigned to a contributor are expected to move forward promptly. If an issue remains assigned without a linked PR update for 7 days, the repository automation will post a reminder comment. If the issue still shows no linked PR activity after 14 days, the assignee is automatically removed so the issue can be claimed by someone else.
 
-To resolve this, run the clean script to clear out all generated build files and caches:
+The thresholds and message text are configurable through the workflow inputs and repository variables used by [.github/workflows/stale-assignments.yml](.github/workflows/stale-assignments.yml). Contributors should keep assignments current, open or update a linked PR early, and unassign themselves if they can no longer work on the issue.
 
-```bash
-pnpm run clean
-```
+### Issue and PR Assignment Policy
 
-This clears the following paths:
-- `.next/` (Next.js build cache)
-- `.turbo/` (Turborepo execution cache)
-- `storybook-static/` (Storybook static build)
-- `coverage/` (Vitest coverage reports)
-- `test-results/` & `playwright-report/` (Playwright E2E test artifacts)
-- `.lighthouseci/` (Lighthouse audit report caches)
-- `tsconfig.tsbuildinfo` (TypeScript incremental compilation info)
+Issues that are assigned to a contributor are expected to move forward promptly. If an issue remains assigned without a linked PR update for 7 days, the repository automation will post a reminder comment. If the issue still shows no linked PR activity after 14 days, the assignee is automatically removed so the issue can be claimed by someone else.
 
-After cleaning, run a fresh install and verify:
-```bash
-pnpm install
-pnpm run verify
-```
-### Makefile Support
+The thresholds and message text are configurable through the workflow inputs and repository variables used by [.github/workflows/stale-assignments.yml](.github/workflows/stale-assignments.yml). Contributors should keep assignments current, open or update a linked PR early, and unassign themselves if they can no longer work on the issue.
 
-For contributors who prefer using `make`, a top-level `Makefile` is available mirroring standard `pnpm` tasks:
+### Before Proposing Architecture Changes
 
-| Target         | Executed Command | Purpose                     |
-| :------------- | :--------------- | :-------------------------- |
-| `make install` | `pnpm install`   | Install dependencies        |
-| `make dev`     | `pnpm dev`       | Start development server    |
-| `make build`   | `pnpm build`     | Build production bundle     |
-| `make test`    | `pnpm test`      | Run Vitest unit tests       |
-| `make lint`    | `pnpm lint`      | Run ESLint check            |
-| `make format`  | `pnpm format`    | Run Prettier formatter      |
-| `make verify`  | `pnpm verify`    | Run full verification suite |
+Read [docs/architecture.md](docs/architecture.md) first. Some questions have already been decided, and reopening one without that context wastes review time:
 
-### Component Scaffolding
+- **GraphQL**: the frontend reads data over REST, Soroban RPC, Horizon, and the indexer's REST/WebSocket endpoints. The decision to adopt, defer, or drop GraphQL is made in [#929](https://github.com/Invoice-Liquidity-Network/ILN-Frontend/issues/929) and recorded in the status section of [docs/graphql-query-guidelines.md](docs/graphql-query-guidelines.md). Read both before proposing a GraphQL client or layer.
 
-To quickly create a new React component along with its matching Storybook story and Vitest test stub following project conventions:
+### Data Fetching and React Query Architecture
 
-```bash
-pnpm scaffold:component <ComponentName>
-# Or for nested components:
-pnpm scaffold:component ui/CustomCard
-```
+To ensure consistent caching, loading states, and bundle efficiency across the application:
 
-This command generates:
-- Component file: `src/components/<ComponentName>.tsx`
-- Storybook file: `src/components/<ComponentName>.stories.tsx`
-- Test stub file: `src/components/__tests__/<ComponentName>.test.tsx` (or inside the target subdirectory)
+1. **Centralized Query Hooks**:
+   All contract data and network fetching logic must be encapsulated inside custom React Query hooks under `src/hooks/queries/` (or `src/hooks/`).
+
+   - Direct `fetch()` calls and direct `useQueryClient` / `QueryClient` usage are **disallowed** inside UI component files (`src/components`, `src/screens`, `src/app`).
+   - An ESLint rule in `eslint.config.mjs` flags direct `fetch` and `useQueryClient` imports/usages in component files outside `src/hooks`.
+
+2. **Shared Default Query Configuration**:
+   All query hooks build on `DEFAULT_QUERY_CONFIG` / `createQueryConfig` exported from `src/hooks/queries/defaultConfig`:
+
+   - `staleTime`: Default 30,000ms (30 seconds)
+   - `gcTime`: Default 5 minutes (300,000ms)
+   - `refetchOnWindowFocus`: Default `false`
+   - `retry`: Default `2`
+
+   Documented per-hook overrides (such as custom `staleTime` or `refetchInterval`) are permitted via `createQueryConfig({ ... })` when genuinely justified by data volatility.
+
+3. **Exception Process**:
+   In rare cases where direct `fetch` or `useQueryClient` is genuinely required inside a component (e.g. an isolated user feedback form submission or app-level reconnect banner):
+   - Add an inline ESLint disable comment above the line:
+     ```typescript
+     // eslint-disable-next-line no-restricted-syntax, no-restricted-imports -- Legacy inline exception or client-only action
+     ```
+   - Provide a concise comment documenting why a custom hook in `src/hooks/queries` was not used.
 
 ### Code Style and Formatting
 
@@ -343,19 +302,6 @@ Note: a number of component tests still live as flat files directly under
 only governs where _new_ tests should go. Bulk migration to colocation is a
 candidate for a future dedicated issue.
 
-#### Flaky Test Detection & Quarantine Process
-
-- **Automated Detection**: A scheduled CI workflow (`flaky-test-detection.yml`) runs the full test suite 3× sequentially on a weekly schedule (every Sunday at 03:00 UTC) to identify intermittent test failures without burdening per-PR CI run times.
-- **Quarantining a Flaky Test**:
-  1. Open a GitHub Issue titled `flaky: <Test Description / Suite Name>` detailing the failure log and frequency.
-  2. Mark the flaky test using `.skip` (e.g. `it.skip(...)` or `describe.skip(...)`) in code.
-  3. Include a comment above the `.skip` referencing the tracking issue URL:
-     ```typescript
-     // Quarantined due to flakiness - see https://github.com/Invoice-Liquidity-Network/ILN-Frontend/issues/<issue_number>
-     it.skip('handles dynamic timer updates without race conditions', () => { ... });
-     ```
-  4. Fix the underlying timing or async race condition in a follow-up PR and remove `.skip`.
-
 #### End-to-End Tests (Playwright)
 
 ```bash
@@ -422,7 +368,7 @@ This convention aligns with our commit message format and helps with changelog g
 
 1. **Code Quality**:
 
-   - Run `pnpm run verify` (lint, env:check, format:check, tsc --noEmit, test) and ensure it passes — this mirrors CI exactly
+   - Run `pnpm run verify` (lint, env:check, i18n:check, format:check, tsc --noEmit, test) and ensure it passes — this mirrors CI exactly
    - Run `npm run lint:fix` to fix all linting errors
    - Run `npm run format` to ensure consistent formatting
    - Ensure zero ESLint warnings
@@ -556,6 +502,10 @@ ILN supports multiple languages using i18next. All user-facing strings must be e
 
    supportedLngs: ["en", "es", "[locale]"],
    ```
+
+Then run `pnpm run i18n:check` to confirm the new locale has exactly the same keys as English. CI runs the same check and fails on any missing or extra key.
+
+See the [locale expansion plan](docs/i18n.md#locale-expansion-plan) for how the next locale is chosen and who owns its translations.
 
 ### i18n Configuration
 
@@ -864,7 +814,6 @@ export const Variant: Story = {
 
 If you need help:
 
-- Check the consolidated troubleshooting guide: [docs/troubleshooting.md](docs/troubleshooting.md) for local environment setup issues, Freighter, Supabase or Resend gotchas.
 - Check existing [GitHub Issues](https://github.com/Invoice-Liquidity-Network/ILN-Frontend/issues)
 - Review the [architecture documentation](docs/architecture.md)
 - Read the [design system guide](DESIGN.md)
@@ -900,6 +849,44 @@ When you open a PR, GitHub will automatically suggest reviewers based on the fil
 ### Adding New Code Owners
 
 If you become a regular contributor to a specific area of the codebase, you can request to be added as a code owner. Contact a maintainer to discuss this.
+
+## Stale Assignment Policy
+
+To maintain effective Wave throughput and ensure issues don't get claimed and abandoned, this repository uses an automated stale assignment reclaimer.
+
+### How It Works
+
+The stale assignment bot runs daily and monitors assigned issues:
+
+1. **Warning Stage (7 days of inactivity)**
+   - If an issue has been assigned for 7+ days with no linked PR activity, a warning comment is added
+   - The issue is labeled with `stale-assignment-warning`
+   - The assignee is notified with instructions to either:
+     - Open a draft PR
+     - Comment with a progress update
+     - Unassign themselves if no longer working on it
+
+2. **Reclaim Stage (14 days of inactivity)**
+   - If no activity is detected for 14+ days, the assignment is automatically removed
+   - The issue is labeled with `assignment-reclaimed`
+   - Other contributors can then claim the issue
+
+### Configuration
+
+The timeout periods are configurable in `.github/workflows/stale-assignments.yml`:
+- `WARNING_DAYS`: Days before warning comment (default: 7)
+- `RECLAIM_DAYS`: Days before unassignment (default: 14)
+
+### For Contributors
+
+- **When claiming an issue**: Open a draft PR within 7 days to show active work
+- **If you need more time**: Comment on the issue with a progress update to reset the timer
+- **If you can't complete it**: Unassign yourself promptly so others can claim it
+- **After reclamation**: If your assignment was reclaimed but you're still working on it, re-assign yourself and open a PR promptly
+
+### Exemptions
+
+Issues with linked open PRs are automatically exempt from the stale assignment check.
 
 ## Code of Conduct
 

@@ -78,14 +78,18 @@ export default function NotificationDrawer({ onClose }: Props) {
                     }`}
                   >
                     <span
-                      className={`material-symbols-outlined mt-0.5 shrink-0 ${getNotificationAccentClass(notification.type)}`}
+                      className={`material-symbols-outlined mt-0.5 shrink-0 ${getNotificationAccentClass(
+                        notification.type
+                      )}`}
                       aria-hidden
                     >
                       {getNotificationIcon(notification.category, notification.type)}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p
-                        className={`text-sm font-semibold ${getNotificationAccentClass(notification.type)}`}
+                        className={`text-sm font-semibold ${getNotificationAccentClass(
+                          notification.type
+                        )}`}
                       >
                         {notification.title}
                       </p>

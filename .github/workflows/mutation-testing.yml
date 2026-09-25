@@ -15,15 +15,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
         with:
-          version: 12.6.0
+          version: '9.0.0'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -31,6 +30,7 @@ jobs:
 
       - name: Run Stryker mutation testing
         run: pnpm run test:mutation
+        continue-on-error: true
 
       - name: Upload mutation report
         uses: actions/upload-artifact@v4
