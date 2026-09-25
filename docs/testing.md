@@ -68,6 +68,18 @@ The app already uses Mock Service Worker to stub network traffic in local tests 
 
 The contract integration workflow in [.github/workflows/contract-tests.yml](../.github/workflows/contract-tests.yml) runs Vitest with coverage against the contract-facing code paths and enforces a 90% coverage threshold. The gate is intentionally scoped to the contract layer (`src/utils/soroban`, `src/utils/contract-stats`, `src/utils/governance`, and `src/lib/contract`) because those modules carry the highest risk of regressions and are the most expensive to validate through UI-only tests.
 
+### Phased coverage expansion — `src/hooks/` (issue #882)
+
+`src/hooks/` contains 38 files and has tests for most hooks but previously had no enforced coverage floor. Coverage enforcement was added in phases to avoid an unrealistic jump from zero enforcement to a high threshold:
+
+**Phase 1 (current — issue #882):** `src/hooks/**/*.ts` and `src/hooks/**/*.tsx` are added to the coverage `include` list. The global `branches` threshold is set at **50%** to establish a floor without breaking CI. The `lines`, `functions`, and `statements` thresholds remain at 90% (these are already satisfied by the existing hook test suite). The branches threshold is lower because several hooks (e.g. `useTransaction`, `useAdminActions`, `useContractEvents`) have complex conditional paths that require deep wallet/contract mocking to exercise fully.
+
+**Phase 2 (target):** Once the low-coverage hooks gain additional test cases, raise the `branches` threshold to **≥ 70%**. At a minimum, add branch coverage for the primary error paths in `useTransaction` and `useAdminActions`.
+
+**Phase 3 (final target):** Raise the `branches` threshold to **≥ 74%** to match the contract-layer interim floor, with the long-term goal of reaching 90% parity with the other metrics.
+
+This is the same phased approach used for `src/utils/soroban.ts`, where 74% branches is the current, verified interim level (see inline comment in `vitest.config.ts`).
+
 ## Mutation testing
 
 Line coverage tells you which code executed, **not** whether your tests would catch a bug. Mutation testing closes that gap: it intentionally introduces small faults (mutants) into the code and checks that at least one test fails. Survivors are tests that pass against broken code — the exact false-confidence trap that line coverage hides.
